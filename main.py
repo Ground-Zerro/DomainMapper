@@ -8,18 +8,19 @@ from io import StringIO
 
 # URLs
 urls = {
-    'youtube': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-youtube.txt",
-    'facebook': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-facebook.txt",
-    'openai': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-openai.txt",
-    'tiktok': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-tiktok.txt",
-    'instagram': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-instagram.txt",
-    'twitter': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-twitter.txt",
+    'Youtube': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-youtube.txt",
+    'Facebook': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-facebook.txt",
+    'Openai': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-openai.txt",
+    'Tik-Tok': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-tiktok.txt",
+    'Instagram': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-instagram.txt",
+    'Twitter': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-twitter.txt",
     'Netflix': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-netflix.txt",
-    'bing': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-bing.txt",
-    'adobe': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-adobe.txt",
-    'apple': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-apple.txt",
-    'google': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-google.txt",
-    'truckers': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-ttruckers.txt"
+    'Bing': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-bing.txt",
+    'Adobe': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-adobe.txt",
+    'Apple': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-apple.txt",
+    'Google': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-google.txt",
+    'Truckers': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-ttruckers.txt",
+    'Antifilter community edition': "https://community.antifilter.download/list/domains.lst"
 }
 
 # Function to display interactive service selection
@@ -46,7 +47,7 @@ def resolve_dns_and_write(service, url):
         resolved_domains = 0
         errors = 0
 
-        with Bar(f"Scanning {service}", max=len(dns_names)) as bar:
+        with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
             with ThreadPoolExecutor(max_workers=50) as executor:
                 futures = []
                 for domain in dns_names:
@@ -86,7 +87,7 @@ def main():
     # Interactive service selection
     while True:
         display_service_selection(selected_services)
-        selection = input("Введите номер сервиса и нажмите Enter (Пустая срока и Enter для завершения): ")
+        selection = input("Введите номер сервиса и нажмите Enter (Пустая срока и Enter для старта): ")
         if selection.isdigit():
             idx = int(selection) - 1
             if 0 <= idx < len(urls):
@@ -121,3 +122,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Open the file for reading
+with open("domain-ip-resolve.txt", "r") as file:
+    lines = file.readlines()
+
+# Remove duplicate lines by creating a set from the list of lines
+unique_lines = set(lines)
+
+# Open the file for writing
+with open("domain-ip-resolve.txt", "w") as file:
+    # Writing the unique strings back to the file
+    file.writelines(unique_lines)
