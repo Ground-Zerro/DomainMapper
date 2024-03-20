@@ -25,7 +25,7 @@ urls = {
 # Function to display interactive service selection
 def display_service_selection(selected_services):
     os.system('clear')
-    print("Р’С‹Р±РµСЂРёС‚Рµ СЃРµСЂРІРёСЃС‹:")
+    print("Выберите сервисы:")
     for idx, (service, url) in enumerate(urls.items(), 1):
         checkbox = "[*]" if service in selected_services else "[ ]"
         print(f"{idx}. {service.capitalize()}  {checkbox}")
@@ -53,8 +53,9 @@ def resolve_dns_and_write(service, url):
                     if domain.strip():
                         futures.append(executor.submit(resolve_domain, resolver, domain, output_string))
                 for future in futures:
-                    future.result()
-                    resolved_domains += 1
+                    resolved, error = future.result()
+                    resolved_domains += resolved
+                    errors += error
                     bar.next()
 
         bar.finish()
@@ -71,8 +72,9 @@ def resolve_domain(resolver, domain, output_string):
         unique_ips = set(ip.address for ip in ips)
         for ip in unique_ips:
             output_string.write(ip + '\n')
+        return len(unique_ips), 0
     except Exception as e:
-        pass  # Ignore DNS resolution errors
+        return 0, 1  # Return 0 for resolved and 1 for error
 
 # Main function
 def main():
@@ -84,7 +86,7 @@ def main():
     # Interactive service selection
     while True:
         display_service_selection(selected_services)
-        selection = input("Выберите номер сервиса (нажмите Enter для завершения): ")
+        selection = input("Введите номер сервиса и нажмите Enter (Пустая срока и Enter для завершения): ")
         if selection.isdigit():
             idx = int(selection) - 1
             if 0 <= idx < len(urls):
