@@ -61,7 +61,7 @@ def resolve_dns_and_write(service, url):
         
         return output_string.getvalue(), resolved_domains, errors
     except Exception as e:
-        print(f"РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РґРѕРјРµРЅРЅС‹С… РёРјРµРЅ РґР»СЏ СЃРµСЂРІРёСЃР° {service}.")
+        print(f"Не удалось получить список доменных имен для сервиса: {service}.")
         return "", 0, 0
 
 # Function to resolve domain and write result to file
@@ -84,7 +84,7 @@ def main():
     # Interactive service selection
     while True:
         display_service_selection(selected_services)
-        selection = input("Р’С‹Р±РµСЂРёС‚Рµ СЃРµСЂРІРёСЃ (РЅР°Р¶РјРёС‚Рµ Enter РґР»СЏ Р·Р°РІРµСЂС€РµРЅРёСЏ): ")
+        selection = input("Выберите номер сервиса (нажмите Enter для завершения): ")
         if selection.isdigit():
             idx = int(selection) - 1
             if 0 <= idx < len(urls):
@@ -111,11 +111,11 @@ def main():
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    print("\nРЎРєР°РЅРёСЂРѕРІР°РЅРёРµ Р·Р°РЅСЏР»Рѕ {:.2f} СЃРµРєСѓРЅРґ".format(elapsed_time))
-    print(f"РџСЂРѕРІРµСЂРµРЅРѕ DNS РёРјРµРЅ: {total_resolved_domains + total_errors}")
-    print(f"РЎРѕРїРѕСЃС‚Р°РІР»РµРЅРѕ IP Р°РґСЂРµСЃРѕРІ РґРѕРјРµРЅР°Рј: {total_resolved_domains}")
-    print(f"РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕРїРѕСЃС‚Р°РІРёС‚СЊ РґРѕРјРµРЅРѕРІ IP Р°РґСЂРµСЃСѓ: {total_errors}")
-    print("Р РµР·СѓР»СЊС‚Р°С‚С‹ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ Р·Р°РїРёСЃР°РЅС‹ РІ С„Р°Р№Р»: domain-ip-resolve.txt")
+    print("\nСканирование заняло {:.2f} секунд".format(elapsed_time))
+    print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
+    print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
+    print(f"Не удалось сопоставить доменов IP адресу: {total_errors}")
+    print("Результаты сканирования записаны в файл: domain-ip-resolve.txt")
 
 if __name__ == "__main__":
     main()
