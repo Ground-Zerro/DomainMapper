@@ -48,7 +48,7 @@ def resolve_dns_and_write(service, url):
         errors = 0
 
         with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
-            with ThreadPoolExecutor(max_workers=50) as executor:
+            with ThreadPoolExecutor(max_workers=20) as executor:
                 futures = []
                 for domain in dns_names:
                     if domain.strip():
