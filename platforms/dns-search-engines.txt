@@ -2,3 +2,4 @@
 yandex.ru
 www.google.com
 www.google.ru
+www.bing.com
