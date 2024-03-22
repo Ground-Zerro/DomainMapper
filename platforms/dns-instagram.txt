@@ -19,6 +19,8 @@ gateway.instagram.com
 geo-p42.instagram.com
 graph.instagram.com
 hackearinstagram.com
+ig.me
+igsonar.com
 i.instagram.com
 i-fallback.instagram.com
 instagram.c10r.facebook.com

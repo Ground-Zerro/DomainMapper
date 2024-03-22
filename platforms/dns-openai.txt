@@ -1,4 +1,5 @@
-﻿api.openai.com
+﻿ab.chatgpt.com
+api.openai.com
 arena.openai.com
 arena-frontend.rapid.openai.org
 auth.openai.com
