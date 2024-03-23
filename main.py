@@ -4,7 +4,6 @@ import requests
 import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
 from progress.bar import Bar
-from io import StringIO
 
 # URLs
 urls = {
@@ -24,18 +23,8 @@ urls = {
     'Search-engines': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines.txt",
 }
 
-# Function to display interactive service selection
-def display_service_selection(selected_services):
-    os.system('clear')
-    print("Выберите сервисы:\n")
-    print("0 - Отметить все")
-    for idx, (service, url) in enumerate(urls.items(), 1):
-        checkbox = "[*]" if service in selected_services else "[ ]"
-        print(f"{idx}. {service.capitalize()}  {checkbox}")
-
-
 # Function to resolve DNS and write to file
-def resolve_dns_and_write(service, url):
+def resolve_dns_and_write(service, url, unique_ips_all_services):
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -46,47 +35,43 @@ def resolve_dns_and_write(service, url):
         resolver.timeout = 1
         resolver.lifetime = 1
 
-        output_string = StringIO()
-
-        resolved_domains = 0
-        errors = 0
+        unique_ips_current_service = set()  # Set to store unique IP addresses for the current service
 
         with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
             with ThreadPoolExecutor(max_workers=50) as executor:
                 futures = []
                 for domain in dns_names:
                     if domain.strip():
-                        futures.append(executor.submit(resolve_domain, resolver, domain, output_string))
+                        futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services))
                 for future in futures:
-                    resolved, error = future.result()
-                    resolved_domains += resolved
-                    errors += error
                     bar.next()
 
         bar.finish()
-        
-        return output_string.getvalue(), resolved_domains, errors
+
+        return '\n'.join(unique_ips_current_service) + '\n'
     except Exception as e:
         print(f"Не удалось загрузить список доменных имен сервиса: {service}.\n")
-        return "", 0, 0
+        return ""
 
 # Function to resolve domain and write result to file
-def resolve_domain(resolver, domain, output_string):
+def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services):
     try:
         ips = resolver.resolve(domain)
-        unique_ips = set(ip.address for ip in ips if ip.address not in ('127.0.0.1', '0.0.0.1') and ip.address not in resolver.nameservers)
-        for ip in unique_ips:
-            output_string.write(ip + '\n')
-        return len(unique_ips), 0
+        for ip in ips:
+            ip_address = ip.address
+            if (ip_address not in ('127.0.0.1', '0.0.0.1') and 
+                ip_address not in resolver.nameservers and
+                ip_address not in unique_ips_all_services):  # Check for uniqueness
+                unique_ips_current_service.add(ip_address)
+                unique_ips_all_services.add(ip_address)
     except dns.resolver.NoAnswer:
-         return 0, 1
+        pass
     except dns.resolver.NXDOMAIN:
-         return 0, 1
+        pass
     except dns.resolver.Timeout:
-         return 0, 1
+        pass
     except Exception as e:
         print(f"Ошибка при разрешении доменного имени {domain}: {e}")
-        return 0, 1
 
 # Main function
 def main():
@@ -97,7 +82,13 @@ def main():
 
     # Interactive service selection
     while True:
-        display_service_selection(selected_services)
+        os.system('clear')
+        print("Выберите сервисы:\n")
+        print("0 - Отметить все")
+        for idx, (service, url) in enumerate(urls.items(), 1):
+            checkbox = "[*]" if service in selected_services else "[ ]"
+            print(f"{idx}. {service.capitalize()}  {checkbox}")
+
         selection = input("\nВведите номер сервиса и нажмите Enter (Пустая строка и Enter для старта): ")
         if selection == "0":
             selected_services = list(urls.keys())
@@ -112,17 +103,18 @@ def main():
         elif selection == "":
             break
 
+    unique_ips_all_services = set()  # Set to store unique IP addresses across all services
+
     # Check if domain-ip-resolve.txt exists and clear it if it does
     if os.path.exists('domain-ip-resolve.txt'):
         os.remove('domain-ip-resolve.txt')
 
     # DNS resolution for selected services
-    for service in selected_services:
-        result, resolved_domains, errors = resolve_dns_and_write(service, urls[service])
-        with open('domain-ip-resolve.txt', 'a') as file:
-            file.write(result)
-        total_resolved_domains += resolved_domains
-        total_errors += errors
+    with open('domain-ip-resolve.txt', 'w') as file:  # Open file for writing
+        for service in selected_services:
+            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services)
+            file.write(result)  # Write unique IPs directly to the file
+            total_resolved_domains += len(result.split('\n')) - 1
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -135,10 +127,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Deleting repetitions
-with open("domain-ip-resolve.txt", "r+") as file:
-    unique_lines = set(file.readlines())
-    file.seek(0)
-    file.truncate()
-    file.writelines(unique_lines)

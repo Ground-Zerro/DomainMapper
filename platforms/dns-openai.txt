@@ -16,6 +16,7 @@ community.openai.com
 contest.openai.com
 debate-game.openai.com
 discuss.openai.com
+files.oaiusercontent.com
 gpt3-openai.com
 gym.openai.com
 help.openai.com

@@ -1,0 +1,28 @@
+﻿[DomainMapper]
+
+# Names of services comma-separated to convert their domain names to IP address
+# available options: 'all', 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
+# if empty will be displayed a request to the user (default)
+service = all
+
+# Number of scanning streams
+# if empty will be used 50 threads (default)
+workers = 50
+
+# Output file name
+# available options: 'filename', 'full path to the filename', if not specified the default value will be used (domain-ip-resolve.txt)
+outfilename = domain-ip-resolve.txt
+
+[/DomainMapper]
+
+# Include or exclude cloudflare IP addresses to result file
+# available options: 'exclude', 'include' or blank (default)
+cloudflare = include
+
+# Output file type
+# available options: 'ip' or blank - IP address only (default), 'vlsm' - IP/mask, 'win' - "rote add %IP% mask %mask% %gateway%"
+type = ip
+
+# Gateway address - used only if option "type" set to 'win'
+# if not specified the default value will be used (0.0.0.0.0)
+gateway = 0.0.0.0
