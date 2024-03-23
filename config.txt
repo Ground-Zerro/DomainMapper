@@ -1,14 +1,14 @@
 ﻿[DomainMapper]
 
 # Names of services comma-separated to convert their domain names to IP address
-# available options: 'all', 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
-# if empty will be displayed a request to the user (default)
+# available options: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
+# 'all' - to chek all services, if empty will be displayed a request to the user (default)
 service = all
 
 
 # Number of scanning streams
-# if empty will be used 50 threads (default)
-workers = 50
+# if empty will be used 30 threads (default)
+workers = 30
 
 
 # Output file name
