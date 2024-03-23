@@ -4,6 +4,8 @@ import requests
 import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
 from progress.bar import Bar
+import ipaddress
+import re
 
 # URLs
 urls = {
@@ -24,7 +26,7 @@ urls = {
 }
 
 # Function to resolve DNS and write to file
-def resolve_dns_and_write(service, url, unique_ips_all_services):
+def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare):
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -35,14 +37,19 @@ def resolve_dns_and_write(service, url, unique_ips_all_services):
         resolver.timeout = 1
         resolver.lifetime = 1
 
+        if include_cloudflare:
+            cloudflare_ips = get_cloudflare_ips()
+        else:
+            cloudflare_ips = set()
+
         unique_ips_current_service = set()  # Set to store unique IP addresses for the current service
 
         with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
-            with ThreadPoolExecutor(max_workers=50) as executor:
+            with ThreadPoolExecutor(max_workers=20) as executor:
                 futures = []
                 for domain in dns_names:
                     if domain.strip():
-                        futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services))
+                        futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
                 for future in futures:
                     bar.next()
 
@@ -53,14 +60,35 @@ def resolve_dns_and_write(service, url, unique_ips_all_services):
         print(f"Не удалось загрузить список доменных имен сервиса: {service}.\n")
         return ""
 
+# Function to get Cloudflare IP addresses
+def get_cloudflare_ips():
+    try:
+        response = requests.get("https://www.cloudflare.com/ips-v4/")
+        response.raise_for_status()
+        cloudflare_ips = set()
+
+        # Extract CIDR blocks from the response text using regular expressions
+        cidr_blocks = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', response.text)
+        
+        for cidr in cidr_blocks:
+            ip_network = ipaddress.ip_network(cidr)
+            for ip in ip_network:
+                cloudflare_ips.add(str(ip))
+
+        return cloudflare_ips
+    except Exception as e:
+        print("Ошибка при получении IP адресов Cloudflare:", e)
+        return set()
+
 # Function to resolve domain and write result to file
-def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services):
+def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips):
     try:
         ips = resolver.resolve(domain)
         for ip in ips:
             ip_address = ip.address
             if (ip_address not in ('127.0.0.1', '0.0.0.1') and 
                 ip_address not in resolver.nameservers and
+                ip_address not in cloudflare_ips and
                 ip_address not in unique_ips_all_services):  # Check for uniqueness
                 unique_ips_current_service.add(ip_address)
                 unique_ips_all_services.add(ip_address)
@@ -103,6 +131,8 @@ def main():
         elif selection == "":
             break
 
+    include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (yes - исключить, Enter - оставить): ").strip().lower() == "yes"
+
     unique_ips_all_services = set()  # Set to store unique IP addresses across all services
 
     # Check if domain-ip-resolve.txt exists and clear it if it does
@@ -112,7 +142,7 @@ def main():
     # DNS resolution for selected services
     with open('domain-ip-resolve.txt', 'w') as file:  # Open file for writing
         for service in selected_services:
-            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services)
+            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare)
             file.write(result)  # Write unique IPs directly to the file
             total_resolved_domains += len(result.split('\n')) - 1
 
