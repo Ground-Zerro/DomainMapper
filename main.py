@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from progress.bar import Bar
 import ipaddress
 import re
+import configparser
 
 # URLs
 urls = {
@@ -26,7 +27,7 @@ urls = {
 }
 
 # Function to resolve DNS and write to file
-def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare):
+def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads):
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -45,7 +46,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
         unique_ips_current_service = set()  # Set to store unique IP addresses for the current service
 
         with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
-            with ThreadPoolExecutor(max_workers=20) as executor:
+            with ThreadPoolExecutor(max_workers=threads) as executor:
                 futures = []
                 for domain in dns_names:
                     if domain.strip():
@@ -101,8 +102,35 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
     except Exception as e:
         print(f"Ошибка при разрешении доменного имени {domain}: {e}")
 
+# Function to read configuration file
+def read_config(filename):
+    config = configparser.ConfigParser()
+    config.read(filename)
+
+    domain_mapper_config = config['DomainMapper']
+
+    # Get parameters from the configuration file or use default values
+    service = domain_mapper_config.get('service', 'all')
+    threads_value = domain_mapper_config.get('threads', '20') # Get value as string
+    threads = int(threads_value) if threads_value else 20 # Convert to int if not empty, otherwise use default value
+    outfilename = domain_mapper_config.get('outfilename', '') or 'domain-ip-resolve.txt'
+    cloudflare = domain_mapper_config.get('cloudflare', '')
+    type_ = domain_mapper_config.get('type', 'ip')
+    gateway = domain_mapper_config.get('gateway', '0.0.0.0')
+    run_command = domain_mapper_config.get('run', '')
+
+    return service, threads, outfilename, cloudflare, type_, gateway, run_command
+
+
 # Main function
 def main():
+    # Read parameters from the configuration file
+    service, threads, outfilename, cloudflare, type_, gateway, run_command = read_config('config.txt')
+
+    # If outfilename is empty, set it to the default value
+    if not outfilename:
+        outfilename = 'domain-ip-resolve.txt'
+
     start_time = time.time()
     total_resolved_domains = 0
     total_errors = 0
@@ -131,18 +159,24 @@ def main():
         elif selection == "":
             break
 
-    include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (yes - исключить, Enter - оставить): ").strip().lower() == "yes"
+    # Check if to include Cloudflare IPs based on configuration or user input
+    if cloudflare.lower() == 'yes':
+        include_cloudflare = True
+    elif cloudflare.lower() == 'no':
+        include_cloudflare = False
+    else:
+        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (yes - исключить, Enter - оставить): ").strip().lower() == "yes"
 
     unique_ips_all_services = set()  # Set to store unique IP addresses across all services
 
     # Check if domain-ip-resolve.txt exists and clear it if it does
-    if os.path.exists('domain-ip-resolve.txt'):
-        os.remove('domain-ip-resolve.txt')
+    if os.path.exists(outfilename):
+        os.remove(outfilename)
 
     # DNS resolution for selected services
-    with open('domain-ip-resolve.txt', 'w') as file:  # Open file for writing
+    with open(outfilename, 'w') as file:  # Open file for writing
         for service in selected_services:
-            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare)
+            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare, threads)
             file.write(result)  # Write unique IPs directly to the file
             total_resolved_domains += len(result.split('\n')) - 1
 
@@ -153,7 +187,7 @@ def main():
     print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
     print(f"Не удалось сопоставить доменов IP адресу: {total_errors}")
-    print("Результаты сканирования записаны в файл: domain-ip-resolve.txt")
+    print("Результаты сканирования записаны в файл:", outfilename)
 
 if __name__ == "__main__":
     main()

@@ -1,24 +1,21 @@
 ﻿[DomainMapper]
-
-# Names of services comma-separated to convert their domain names to IP address
-# available options: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
-# 'all' - to chek all services, if empty will be displayed a request to the user (default)
-service = all
-
-
-# Number of scanning streams
-# if empty will be used 30 threads (default)
-workers = 30
-
+# Number of scanning threads
+# if empty will be used 20 threads (default)
+threads = 20
 
 # Output file name
 # available options: 'filename', 'full path to the filename', if not specified the default value will be used (domain-ip-resolve.txt)
 outfilename = domain-ip-resolve.txt
 
+# Enable cloudflare IP address filtering and not write them to the results file
+# available options: 'yes', 'no', if empty will be display an interactive prompt to the user (default) 
+cloudflare = 
 
-# Include or exclude cloudflare IP addresses to result file
-# available options: 'exclude', 'include' or blank (default)
-cloudflare = include
+[InWork]
+# Names of services comma-separated to convert their domain names to IP address
+# available options: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
+# 'all' - to chek all services, if empty will be displayed a request to the user (default)
+service = Antifilter community edition
 
 # Output file type
 # available options: 'ip' or blank - IP address only (default), 'vlsm' - IP/mask, 'win' - "rote add %IP% mask %mask% %gateway%"
@@ -32,5 +29,3 @@ gateway = 0.0.0.0
 # an executable command to run another script, code or program 
 # nothing (default)
 run = 
-
-[/DomainMapper]
