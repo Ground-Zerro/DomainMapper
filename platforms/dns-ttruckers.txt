@@ -9,6 +9,7 @@ rarbg.to
 rutor.info
 rutor.org
 rutracker.org
+static.rutracker.cc
 tapochek.net
 thelastgame.ru
 thepiratebay.org
