@@ -28,3 +28,4 @@ type = ip
 # Gateway address - used only if option "type" set to 'win'
 # if not specified the default value will be used (0.0.0.0.0)
 gateway = 0.0.0.0
+

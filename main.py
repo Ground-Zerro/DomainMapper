@@ -1,4 +1,4 @@
-import os
+﻿import os
 import requests
 import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
@@ -27,6 +27,7 @@ urls = {
 # Function to resolve DNS
 def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads):
     try:
+        print(f"Загрузка данных - {service}")
         response = requests.get(url)
         response.raise_for_status()
         dns_names = response.text.split('\n')
@@ -52,9 +53,11 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
                     futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
 
         return '\n'.join(unique_ips_current_service) + '\n'
+        print(f"Список IP-адресов для платформы {service} создан.")
     except Exception as e:
-        print(f"Не удалось загрузить список доменных имен сервиса: {service}.\n")
+        print(f"Не удалось сопоставить IP адреса {service} его доменным именам.", e)
         return ""
+
 
 # Function to get Cloudflare IP addresses
 def get_cloudflare_ips():
@@ -101,7 +104,7 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 def read_config(filename):
     # Default values
     default_values = ('all', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', 'echo "Ground_Zerro 2024"')
-
+    
     try:
         config = configparser.ConfigParser()
         config.read(filename)
@@ -119,18 +122,16 @@ def read_config(filename):
 
             return service, threads, outfilename, cloudflare, type_, gateway, run_command
         else:
-            print("Секция 'DomainMapper' отсутствует в конфигурационном файле. Будут использованы значения по умолчанию.")
             return default_values
 
     except Exception as e:
-        print("Ошибка при чтении конфигурационного файла:", e)
         return default_values
 
 # Main function
 def main():
     # Read parameters from the configuration file
     service, threads, outfilename, cloudflare, type_, gateway, run_command = read_config('config.txt')
-
+    
     total_resolved_domains = 0
     total_errors = 0
     selected_services = []
@@ -182,7 +183,7 @@ def main():
     print("\nПроверка завершена.")
     print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
-    print(f"Не удалось сопоставить доменов IP адресу: {total_errors}")
+    print(f"Не удалось обработать доменных имен: {total_errors}")
     print("Результаты проверки сохранены в файл:", outfilename)
 
 # Executing the command after the program is completed, if it is specified in the configuration file
