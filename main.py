@@ -1,9 +1,7 @@
 ﻿import os
-import time
 import requests
 import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
-from progress.bar import Bar
 import ipaddress
 import re
 import configparser
@@ -45,16 +43,13 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
 
         unique_ips_current_service = set()  # Set to store unique IP addresses for the current service
 
-        with Bar(f"Scanning: {service}", max=len(dns_names)) as bar:
-            with ThreadPoolExecutor(max_workers=threads) as executor:
-                futures = []
-                for domain in dns_names:
-                    if domain.strip():
-                        futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
-                for future in futures:
-                    bar.next()
+        print(f"Проверка сервиса: {service}")
 
-        bar.finish()
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = []
+            for domain in dns_names:
+                if domain.strip():
+                    futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
 
         return '\n'.join(unique_ips_current_service) + '\n'
     except Exception as e:
@@ -131,7 +126,6 @@ def main():
     if not outfilename:
         outfilename = 'domain-ip-resolve.txt'
 
-    start_time = time.time()
     total_resolved_domains = 0
     total_errors = 0
     selected_services = []
@@ -180,14 +174,11 @@ def main():
             file.write(result)  # Write unique IPs directly to the file
             total_resolved_domains += len(result.split('\n')) - 1
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    print("\nСканирование заняло {:.2f} секунд".format(elapsed_time))
+    print("\nПроверка завершена.")
     print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
     print(f"Не удалось сопоставить доменов IP адресу: {total_errors}")
-    print("Результаты сканирования записаны в файл:", outfilename)
+    print("Результаты проверки сохранены в файл:", outfilename)
 
 if __name__ == "__main__":
     main()
