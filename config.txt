@@ -1,4 +1,4 @@
-﻿[DomainMapper]
+[DomainMapper]
 # Number of scanning threads
 # if empty will be used 20 threads (default)
 threads = 20
@@ -15,7 +15,7 @@ cloudflare =
 # Names of services comma-separated to convert their domain names to IP address
 # available options: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
 # 'all' - to chek all services, if empty will be displayed a request to the user (default)
-service = Antifilter community edition
+service = all
 
 # Output file type
 # available options: 'ip' or blank - IP address only (default), 'vlsm' - IP/mask, 'win' - "rote add %IP% mask %mask% %gateway%"

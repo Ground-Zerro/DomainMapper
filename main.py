@@ -24,7 +24,7 @@ urls = {
     'Search-engines': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines.txt",
 }
 
-# Function to resolve DNS and write to file
+# Function to resolve DNS
 def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads):
     try:
         response = requests.get(url)
@@ -43,7 +43,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
 
         unique_ips_current_service = set()  # Set to store unique IP addresses for the current service
 
-        print(f"Проверка сервиса: {service}")
+        print(f"Анализ DNS имен платформы: {service}")
 
         with ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
@@ -76,7 +76,7 @@ def get_cloudflare_ips():
         print("Ошибка при получении IP адресов Cloudflare:", e)
         return set()
 
-# Function to resolve domain and write result to file
+# Function to write result to file
 def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips):
     try:
         ips = resolver.resolve(domain)
@@ -99,23 +99,33 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 
 # Function to read configuration file
 def read_config(filename):
-    config = configparser.ConfigParser()
-    config.read(filename)
+    # Default values
+    default_values = ('all', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', '')
 
-    domain_mapper_config = config['DomainMapper']
+    try:
+        config = configparser.ConfigParser()
+        config.read(filename)
 
-    # Get parameters from the configuration file or use default values
-    service = domain_mapper_config.get('service', 'all')
-    threads_value = domain_mapper_config.get('threads', '20') # Get value as string
-    threads = int(threads_value) if threads_value else 20 # Convert to int if not empty, otherwise use default value
-    outfilename = domain_mapper_config.get('outfilename', '') or 'domain-ip-resolve.txt'
-    cloudflare = domain_mapper_config.get('cloudflare', '')
-    type_ = domain_mapper_config.get('type', 'ip')
-    gateway = domain_mapper_config.get('gateway', '0.0.0.0')
-    run_command = domain_mapper_config.get('run', '')
+        if 'DomainMapper' in config:
+            domain_mapper_config = config['DomainMapper']
 
-    return service, threads, outfilename, cloudflare, type_, gateway, run_command
+            service = domain_mapper_config.get('service', default_values[0])
+            threads_value = domain_mapper_config.get('threads', default_values[1])
+            threads = int(threads_value)
+            outfilename = domain_mapper_config.get('outfilename', default_values[2])
+            cloudflare = domain_mapper_config.get('cloudflare', default_values[3])
+            type_ = domain_mapper_config.get('type', default_values[4])
+            gateway = domain_mapper_config.get('gateway', default_values[5])
+            run_command = domain_mapper_config.get('run', default_values[6])
 
+            return service, threads, outfilename, cloudflare, type_, gateway, run_command
+        else:
+            print("Секция 'DomainMapper' отсутствует в конфигурационном файле. Будут использованы значения по умолчанию.")
+            return default_values
+
+    except Exception as e:
+        print("Ошибка при чтении конфигурационного файла:", e)
+        return default_values
 
 # Main function
 def main():
