@@ -1,4 +1,4 @@
-﻿import os
+import os
 import requests
 import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
@@ -100,7 +100,7 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 # Function to read configuration file
 def read_config(filename):
     # Default values
-    default_values = ('all', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', '')
+    default_values = ('all', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', 'echo "Ground_Zerro 2024"')
 
     try:
         config = configparser.ConfigParser()
@@ -109,14 +109,13 @@ def read_config(filename):
         if 'DomainMapper' in config:
             domain_mapper_config = config['DomainMapper']
 
-            service = domain_mapper_config.get('service', default_values[0])
-            threads_value = domain_mapper_config.get('threads', default_values[1])
-            threads = int(threads_value)
-            outfilename = domain_mapper_config.get('outfilename', default_values[2])
-            cloudflare = domain_mapper_config.get('cloudflare', default_values[3])
-            type_ = domain_mapper_config.get('type', default_values[4])
-            gateway = domain_mapper_config.get('gateway', default_values[5])
-            run_command = domain_mapper_config.get('run', default_values[6])
+            service = domain_mapper_config.get('service', default_values[0]) or 'all'
+            threads = int(domain_mapper_config.get('threads', default_values[1])  or 20)
+            outfilename = domain_mapper_config.get('outfilename', default_values[2]) or 'domain-ip-resolve.txt'
+            cloudflare = domain_mapper_config.get('cloudflare', default_values[3]) or ''
+            type_ = domain_mapper_config.get('type', default_values[4]) or 'ip'
+            gateway = domain_mapper_config.get('gateway', default_values[5]) or '0.0.0.0'
+            run_command = domain_mapper_config.get('run', default_values[6]) or 'echo "Ground_Zerro 2024"'
 
             return service, threads, outfilename, cloudflare, type_, gateway, run_command
         else:
@@ -131,10 +130,6 @@ def read_config(filename):
 def main():
     # Read parameters from the configuration file
     service, threads, outfilename, cloudflare, type_, gateway, run_command = read_config('config.txt')
-
-    # If outfilename is empty, set it to the default value
-    if not outfilename:
-        outfilename = 'domain-ip-resolve.txt'
 
     total_resolved_domains = 0
     total_errors = 0
@@ -189,6 +184,11 @@ def main():
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
     print(f"Не удалось сопоставить доменов IP адресу: {total_errors}")
     print("Результаты проверки сохранены в файл:", outfilename)
+
+# Executing the command after the program is completed, if it is specified in the configuration file
+    if run_command:
+        print("\nВыполнение команды после завершения программы...")
+        os.system(run_command)
 
 if __name__ == "__main__":
     main()
