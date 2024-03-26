@@ -220,3 +220,4 @@ news.google.com
 oo.gl
 redirector.gvt1.com
 withgoogle.com
+play.google.com
