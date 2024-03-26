@@ -35,7 +35,7 @@
 - ipaddress
 - configparser
 
-*Не забудьте установить их перез запуском:*
+*Не забудьте установить их перед запуском:*
 ```
 pip3 install -r requirements.txt
 ```
