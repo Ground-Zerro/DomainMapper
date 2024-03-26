@@ -204,6 +204,9 @@ def main():
                     file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
         elif outfilename_format.lower() == 'win':
             # Handle Windows format here
+            gateway_input = input(f"Укажите шлюз (\033[32mEnter\033[0m - {gateway}): ")
+            if gateway_input:
+                gateway = gateway_input.strip()
             with open(outfilename, 'r') as file:
                 ips = file.readlines()
             with open(outfilename, 'w') as file:
