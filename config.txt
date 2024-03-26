@@ -1,31 +1,31 @@
 [DomainMapper]
-# Number of scanning threads
-# if empty will be used 20 threads (default)
-threads = 20
+# Имена сервисов, разделенные запятыми, для преобразования их доменных имен в IP-адреса без запроса их выбора у пользователя
+# доступные варианты: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
+# 'all' - проверить все сервисы, если значение пустое (по умолчанию) - пользователю будет выведено меню выбора
+service  = 
 
-# Output file name
-# available options: 'filename', 'full path to the filename', if not specified the default value will be used (domain-ip-resolve.txt)
-outfilename = domain-ip-resolve.txt
-
-# Enable cloudflare IP address filtering and not write them to the results file
-# available options: 'yes', 'no', if empty will be display an interactive prompt to the user (default) 
+# Включить фильтрацию IP-адресов cloudflare и не записывать их в файл результатов
+# доступные опции: 'yes', 'no', если значение пусте (по умолчанию) - пользователю будет выведен запрос с подсказкой
 cloudflare = 
 
-# Command for the console after all operations have been completed
-# an executable command to run another script, code or program 
+# Имя выходного файла
+# доступные опции: 'имя_файла', 'полный_путь/имя_файла', если не указано - будет использоваться имя фала "domain-ip-resolve.txt" в папке со скриптом
+outfilename = 
+
+# Количество потоков сканирования
+# если не указано (по умолчанию) - будет использоваться 20 потоков
+threads = 20
+
+# Команда для консоли после завершения скриптом всех операций
+# может быть полезно для автоматизации и комбинирования с другим скриптом, кодом или программой
+# доступные опции: 'исполняемая_команда_для_консоли'
 run = echo "Все будет О'кей!"
 
 [InWork]
-# Names of services comma-separated to convert their domain names to IP address
-# available options: 'Antifilter community edition', 'Youtube', 'Facebook', 'Openai', 'Tik-Tok', 'Instagram', 'Twitter', 'Netflix', 'Bing', 'Adobe', 'Apple', 'Google', 'Tor-Truckers', 'Search-engines'
-# 'all' - to chek all services, if empty will be displayed a request to the user (default)
-service = all
-
-# Output file type
-# available options: 'ip' or blank - IP address only (default), 'vlsm' - IP/mask, 'win' - "rote add %IP% mask %mask% %gateway%"
+# Тип выходного файла
+# доступные опции: 'ip' или пустое значение - только "IP" адрес (по умолчанию), 'vlsm' - "IP/маска", 'win' - "rote add %IP% mask %mask% %gateway%"
 type = ip
 
-# Gateway address - used only if option "type" set to 'win'
-# if not specified the default value will be used (0.0.0.0.0)
+# адрес шлюза - используется, только если опция "type" установлена в 'win'
+# если не указан, будет использоваться значение по умолчанию (0.0.0.0.0)
 gateway = 0.0.0.0
-

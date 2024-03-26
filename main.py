@@ -103,7 +103,7 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 # Function to read configuration file
 def read_config(filename):
     # Default values
-    default_values = ('all', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', 'echo "Ground_Zerro 2024"')
+    default_values = ('', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', 'echo "Ground_Zerro 2024"')
     
     try:
         config = configparser.ConfigParser()
@@ -112,7 +112,7 @@ def read_config(filename):
         if 'DomainMapper' in config:
             domain_mapper_config = config['DomainMapper']
 
-            service = domain_mapper_config.get('service', default_values[0]) or 'all'
+            service = domain_mapper_config.get('service', default_values[0]) or ''
             threads = int(domain_mapper_config.get('threads', default_values[1])  or 20)
             outfilename = domain_mapper_config.get('outfilename', default_values[2]) or 'domain-ip-resolve.txt'
             cloudflare = domain_mapper_config.get('cloudflare', default_values[3]) or ''
@@ -136,28 +136,35 @@ def main():
     total_errors = 0
     selected_services = []
 
-    # Interactive service selection
-    while True:
-        os.system('clear')
-        print("Выберите сервисы:\n")
-        print("0 - Отметить все")
-        for idx, (service, url) in enumerate(urls.items(), 1):
-            checkbox = "[*]" if service in selected_services else "[ ]"
-            print(f"{idx}. {service.capitalize()}  {checkbox}")
+    # Check if 'service' is specified in the configuration file
+    if service:
+        if service.strip().lower() == "all":
+            selected_services = list(urls.keys())  # Select all available services
+        else:
+            selected_services = [s.strip() for s in service.split(',')]
+    else:
+        # Interactive service selection
+        while True:
+            os.system('clear')
+            print("Выберите сервисы:\n")
+            print("0 - Отметить все")
+            for idx, (service, url) in enumerate(urls.items(), 1):
+                checkbox = "[*]" if service in selected_services else "[ ]"
+                print(f"{idx}. {service.capitalize()}  {checkbox}")
 
-        selection = input("\nВведите номер сервиса и нажмите Enter (Пустая строка и Enter для старта): ")
-        if selection == "0":
-            selected_services = list(urls.keys())
-        elif selection.isdigit():
-            idx = int(selection) - 1
-            if 0 <= idx < len(urls):
-                service = list(urls.keys())[idx]
-                if service in selected_services:
-                    selected_services.remove(service)
-                else:
-                    selected_services.append(service)
-        elif selection == "":
-            break
+            selection = input("\nВведите номер сервиса и нажмите Enter (Пустая строка и Enter для старта): ")
+            if selection == "0":
+                selected_services = list(urls.keys())
+            elif selection.isdigit():
+                idx = int(selection) - 1
+                if 0 <= idx < len(urls):
+                    service = list(urls.keys())[idx]
+                    if service in selected_services:
+                        selected_services.remove(service)
+                    else:
+                        selected_services.append(service)
+            elif selection == "":
+                break
 
     # Check if to include Cloudflare IPs based on configuration or user input
     if cloudflare.lower() == 'yes':
@@ -186,7 +193,7 @@ def main():
     print(f"Не удалось обработать доменных имен: {total_errors}")
     print("Результаты проверки сохранены в файл:", outfilename)
 
-# Executing the command after the program is completed, if it is specified in the configuration file
+    # Executing the command after the program is completed, if it is specified in the configuration file
     if run_command:
         print("\nВыполнение команды после завершения программы...")
         os.system(run_command)
