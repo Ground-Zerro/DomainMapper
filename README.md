@@ -36,7 +36,7 @@
 - configparser
 
 *Не забудьте установить их перез запуском:*
-```rb
+```
 pip3 install -r requirements.txt
 ```
 
