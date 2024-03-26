@@ -46,4 +46,4 @@ pip3 install -r requirements.txt
 
 
 
-#### Проверено в Windows 10/11
+#### Протестировано в Ubuntu 20.04 и Windows 10/11
