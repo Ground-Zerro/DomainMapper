@@ -103,11 +103,12 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 # Function to read configuration file
 def read_config(filename):
     # Default values
-    default_values = ('', 20, 'domain-ip-resolve.txt', '', 'ip', '0.0.0.0', 'echo "Ground_Zerro 2024"')
+    default_values = ('', 20, 'domain-ip-resolve.txt', '', '', '0.0.0.0', '')
     
     try:
         config = configparser.ConfigParser()
-        config.read(filename)
+        with open(filename, 'r', encoding='utf-8-sig') as file:  # 'utf-8-sig' для UTF-8 без BOM
+            config.read_file(file)
 
         if 'DomainMapper' in config:
             domain_mapper_config = config['DomainMapper']
@@ -116,21 +117,20 @@ def read_config(filename):
             threads = int(domain_mapper_config.get('threads', default_values[1])  or 20)
             outfilename = domain_mapper_config.get('outfilename', default_values[2]) or 'domain-ip-resolve.txt'
             cloudflare = domain_mapper_config.get('cloudflare', default_values[3]) or ''
-            type_ = domain_mapper_config.get('type', default_values[4]) or 'ip'
+            filetype = domain_mapper_config.get('filetype', default_values[4]) or ''
             gateway = domain_mapper_config.get('gateway', default_values[5]) or '0.0.0.0'
-            run_command = domain_mapper_config.get('run', default_values[6]) or 'echo "Ground_Zerro 2024"'
+            run_command = domain_mapper_config.get('run', default_values[6]) or ''
 
-            return service, threads, outfilename, cloudflare, type_, gateway, run_command
+            return service, threads, outfilename, cloudflare, filetype, gateway, run_command
         else:
             return default_values
 
     except Exception as e:
         return default_values
 
-# Main function
 def main():
     # Read parameters from the configuration file
-    service, threads, outfilename, cloudflare, type_, gateway, run_command = read_config('config.txt')
+    service, threads, outfilename, cloudflare, filetype, gateway, run_command = read_config('config.txt')
     
     total_resolved_domains = 0
     total_errors = 0
@@ -152,7 +152,7 @@ def main():
                 checkbox = "[*]" if service in selected_services else "[ ]"
                 print(f"{idx}. {service.capitalize()}  {checkbox}")
 
-            selection = input("\nВведите номер сервиса и нажмите Enter (Пустая строка и Enter для старта): ")
+            selection = input("\n\033[32mВведите номер сервиса\033[0m и нажмите Enter (Пустая строка и \033[32mEnter\033[0m для старта): ")
             if selection == "0":
                 selected_services = list(urls.keys())
             elif selection.isdigit():
@@ -172,7 +172,7 @@ def main():
     elif cloudflare.lower() == 'no':
         include_cloudflare = False
     else:
-        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (yes - исключить, Enter - оставить): ").strip().lower() == "yes"
+        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m - исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
 
     unique_ips_all_services = set()  # Set to store unique IP addresses across all services
 
@@ -191,12 +191,49 @@ def main():
     print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
     print(f"Не удалось обработать доменных имен: {total_errors}")
-    print("Результаты проверки сохранены в файл:", outfilename)
+    
+    # Asking for file format if filetype is not specified in the configuration file
+    if not filetype:
+        outfilename_format = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m - 'route add %IP% mask %mask% %gateway%', \033[32mvlsm\033[0m - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
+        if outfilename_format.lower() == 'vlsm':
+            # Handle VLSM format here
+            with open(outfilename, 'r') as file:
+                ips = file.readlines()
+            with open(outfilename, 'w') as file:
+                for ip in ips:
+                    file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
+        elif outfilename_format.lower() == 'win':
+            # Handle Windows format here
+            with open(outfilename, 'r') as file:
+                ips = file.readlines()
+            with open(outfilename, 'w') as file:
+                for ip in ips:
+                    file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
+        else:
+            # Handle default IP address format here (no modification needed)
+            pass
+    elif filetype.lower() == 'vlsm':
+        # Handle VLSM format if specified in the configuration file
+        with open(outfilename, 'r') as file:
+            ips = file.readlines()
+        with open(outfilename, 'w') as file:
+            for ip in ips:
+                file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
+    elif filetype.lower() == 'win':
+        # Handle Windows format if specified in the configuration file
+        with open(outfilename, 'r') as file:
+            ips = file.readlines()
+        with open(outfilename, 'w') as file:
+            for ip in ips:
+                file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
 
     # Executing the command after the program is completed, if it is specified in the configuration file
-    if run_command:
+    if run_command is not None and run_command.strip():
         print("\nВыполнение команды после завершения программы...")
         os.system(run_command)
+    else:
+        print("Результаты сохранены в файл:", outfilename)
+        input("Нажмите \033[32mEnter\033[0m для продолжения...") # Для пользователей Windows при запуске из проводника
 
 if __name__ == "__main__":
     main()
