@@ -34,6 +34,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
 
         resolver = dns.resolver.Resolver(configure=False)
         resolver.nameservers = ['9.9.9.9', '149.112.112.112', '8.8.8.8', '8.8.4.4', '208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '91.239.100.100', '89.233.43.71', '4.2.2.1', '4.2.2.2', '4.2.2.3', '4.2.2.4', '4.2.2.5', '4.2.2.6'] # Public DNS servers
+        resolver.rotate = True
         resolver.timeout = 1
         resolver.lifetime = 1
 
@@ -52,8 +53,8 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
                 if domain.strip():
                     futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
 
-        return '\n'.join(unique_ips_current_service) + '\n'
         print(f"Список IP-адресов для платформы {service} создан.")
+        return '\n'.join(unique_ips_current_service) + '\n'
     except Exception as e:
         print(f"Не удалось сопоставить IP адреса {service} его доменным именам.", e)
         return ""

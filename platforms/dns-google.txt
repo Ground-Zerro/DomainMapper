@@ -1,12 +1,9 @@
-﻿1e100.net
-agnss.goog
+﻿agnss.goog
 channel.status.request.url
 edgedl.me.gvt1.com
 g.cn
 g.co
 ggpht.com
-goog
-google
 google.ad
 google.ae
 google.al
