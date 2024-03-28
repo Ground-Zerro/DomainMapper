@@ -33,7 +33,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
         dns_names = response.text.split('\n')
 
         resolver = dns.resolver.Resolver(configure=False)
-        resolver.nameservers = ['9.9.9.9', '149.112.112.112', '8.8.8.8', '8.8.4.4', '208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '91.239.100.100', '89.233.43.71', '4.2.2.1', '4.2.2.2', '4.2.2.3', '4.2.2.4', '4.2.2.5', '4.2.2.6'] # Public DNS servers
+        resolver.nameservers = ['8.8.8.8', '8.8.4.4', '9.9.9.9', '149.112.112.112', '208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '91.239.100.100', '89.233.43.71', '4.2.2.1', '4.2.2.2', '4.2.2.3', '4.2.2.4', '4.2.2.5', '4.2.2.6'] # Public DNS servers
         resolver.rotate = True
         resolver.timeout = 1
         resolver.lifetime = 1
@@ -51,14 +51,18 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
             futures = []
             for domain in dns_names:
                 if domain.strip():
-                    futures.append(executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips))
+                    future = executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips)
+                    futures.append(future)
+            
+            # Дождаться завершения всех задач
+            for future in futures:
+                future.result()
 
         print(f"Список IP-адресов для платформы {service} создан.")
         return '\n'.join(unique_ips_current_service) + '\n'
     except Exception as e:
         print(f"Не удалось сопоставить IP адреса {service} его доменным именам.", e)
         return ""
-
 
 # Function to get Cloudflare IP addresses
 def get_cloudflare_ips():
@@ -80,7 +84,7 @@ def get_cloudflare_ips():
         print("Ошибка при получении IP адресов Cloudflare:", e)
         return set()
 
-# Function to write result to file
+# Function resolve domain
 def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips):
     try:
         ips = resolver.resolve(domain)
@@ -92,14 +96,9 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
                 ip_address not in unique_ips_all_services):  # Check for uniqueness
                 unique_ips_current_service.add(ip_address)
                 unique_ips_all_services.add(ip_address)
-    except dns.resolver.NoAnswer:
-        pass
-    except dns.resolver.NXDOMAIN:
-        pass
-    except dns.resolver.Timeout:
-        pass
+                print(f"\033[36m{domain} IP адрес: {ip_address}\033[0m")
     except Exception as e:
-        print(f"Ошибка при разрешении доменного имени {domain}: {e}")
+        print(f"\033[31mНе удалось обработать: {domain}\033[0m")
 
 # Function to read configuration file
 def read_config(filename):
@@ -134,7 +133,6 @@ def main():
     service, threads, outfilename, cloudflare, filetype, gateway, run_command = read_config('config.txt')
     
     total_resolved_domains = 0
-    total_errors = 0
     selected_services = []
 
     # Check if 'service' is specified in the configuration file
@@ -189,14 +187,12 @@ def main():
             total_resolved_domains += len(result.split('\n')) - 1
 
     print("\nПроверка завершена.")
-    print(f"Проверено DNS имен: {total_resolved_domains + total_errors}")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
-    print(f"Не удалось обработать доменных имен: {total_errors}")
     
     # Asking for file format if filetype is not specified in the configuration file
     if not filetype:
-        outfilename_format = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m - 'route add %IP% mask %mask% %gateway%', \033[32mvlsm\033[0m - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
-        if outfilename_format.lower() == 'vlsm':
+        outfilename_format = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m - 'route add %IP% mask %mask% %gateway%', \033[32mcidr\033[0m - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
+        if outfilename_format.lower() == 'cidr':
             # Handle VLSM format here
             with open(outfilename, 'r', encoding='utf-8-sig') as file:
                 ips = file.readlines()
@@ -216,7 +212,7 @@ def main():
         else:
             # Handle default IP address format here (no modification needed)
             pass
-    elif filetype.lower() == 'vlsm':
+    elif filetype.lower() == 'cidr':
         # Handle VLSM format if specified in the configuration file
         with open(outfilename, 'r') as file:
             ips = file.readlines()
