@@ -182,7 +182,7 @@ def main():
         os.remove(outfilename)
 
     # DNS resolution for selected services
-    with open(outfilename, 'w') as file:  # Open file for writing
+    with open(outfilename, 'w', encoding='utf-8-sig') as file:  # Open file for writing
         for service in selected_services:
             result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare, threads)
             file.write(result)  # Write unique IPs directly to the file
@@ -198,9 +198,9 @@ def main():
         outfilename_format = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m - 'route add %IP% mask %mask% %gateway%', \033[32mvlsm\033[0m - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
         if outfilename_format.lower() == 'vlsm':
             # Handle VLSM format here
-            with open(outfilename, 'r') as file:
+            with open(outfilename, 'r', encoding='utf-8-sig') as file:
                 ips = file.readlines()
-            with open(outfilename, 'w') as file:
+            with open(outfilename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
         elif outfilename_format.lower() == 'win':
@@ -208,9 +208,9 @@ def main():
             gateway_input = input(f"Укажите шлюз (\033[32mEnter\033[0m - {gateway}): ")
             if gateway_input:
                 gateway = gateway_input.strip()
-            with open(outfilename, 'r') as file:
+            with open(outfilename, 'r', encoding='utf-8-sig') as file:
                 ips = file.readlines()
-            with open(outfilename, 'w') as file:
+            with open(outfilename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
         else:
@@ -225,9 +225,9 @@ def main():
                 file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
     elif filetype.lower() == 'win':
         # Handle Windows format if specified in the configuration file
-        with open(outfilename, 'r') as file:
+        with open(outfilename, 'r', encoding='utf-8-sig') as file:
             ips = file.readlines()
-        with open(outfilename, 'w') as file:
+        with open(outfilename, 'w', encoding='utf-8-sig') as file:
             for ip in ips:
                 file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
 
