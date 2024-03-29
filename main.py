@@ -33,7 +33,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
         dns_names = response.text.split('\n')
 
         resolver = dns.resolver.Resolver(configure=False)
-        resolver.nameservers = ['8.8.8.8', '8.8.4.4', '9.9.9.9', '149.112.112.112', '208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '91.239.100.100', '89.233.43.71', '4.2.2.1', '4.2.2.2', '4.2.2.3', '4.2.2.4', '4.2.2.5', '4.2.2.6'] # Public DNS servers
+        resolver.nameservers = ['8.8.8.8', '8.8.4.4', '208.67.222.222', '208.67.220.220', '4.2.2.1', '4.2.2.2', '149.112.112.112'] # Public DNS servers
         resolver.rotate = True
         resolver.timeout = 1
         resolver.lifetime = 1
