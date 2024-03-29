@@ -144,7 +144,10 @@ def main():
     else:
         # Interactive service selection
         while True:
-            os.system('clear')
+            if os.name == 'nt':  # Для пользователей Windows
+                os.system('cls')  # Очистить экран
+            else:
+                os.system('clear')
             print("Выберите сервисы:\n")
             print("0 - Отметить все")
             for idx, (service, url) in enumerate(urls.items(), 1):
