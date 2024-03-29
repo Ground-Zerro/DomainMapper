@@ -4,7 +4,7 @@
 **Описание:** Это инструмент на языке Python, предназначенный для создания списка IP-адресов популярных веб-сервисов.
 
 Включена поддержка следующих сервисов:
-- Antifilter - community edition
+- [Antifilter - community edition](https://community.antifilter.download/)
 - Youtube
 - Facebook
 - Openai
@@ -53,3 +53,6 @@ pip3 install -r requirements.txt
 
 
 #### Протестировано в Ubuntu 20.04 и Windows 10/11
+
+
+
