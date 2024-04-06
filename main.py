@@ -21,8 +21,10 @@ urls = {
     'Apple': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-apple.txt",
     'Google': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-google.txt",
     'Tor-Truckers': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-ttruckers.txt",
-    'Search-engines': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines.txt",
+    'Search-engines': "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines"
+                      ".txt",
 }
+
 
 # Function to resolve DNS
 def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads):
@@ -33,7 +35,8 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
         dns_names = response.text.split('\n')
 
         resolver = dns.resolver.Resolver(configure=False)
-        resolver.nameservers = ['8.8.8.8', '8.8.4.4', '208.67.222.222', '208.67.220.220', '4.2.2.1', '4.2.2.2', '149.112.112.112'] # Public DNS servers
+        resolver.nameservers = ['8.8.8.8', '8.8.4.4', '208.67.222.222', '208.67.220.220', '4.2.2.1', '4.2.2.2',
+                                '149.112.112.112']  # Public DNS servers
         resolver.rotate = True
         resolver.timeout = 1
         resolver.lifetime = 1
@@ -51,9 +54,10 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
             futures = []
             for domain in dns_names:
                 if domain.strip():
-                    future = executor.submit(resolve_domain, resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips)
+                    future = executor.submit(resolve_domain, resolver, domain, unique_ips_current_service,
+                                             unique_ips_all_services, cloudflare_ips)
                     futures.append(future)
-            
+
             # Дождаться завершения всех задач
             for future in futures:
                 future.result()
@@ -64,6 +68,7 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
         print(f"Не удалось сопоставить IP адреса {service} его доменным именам.", e)
         return ""
 
+
 # Function to get Cloudflare IP addresses
 def get_cloudflare_ips():
     try:
@@ -73,7 +78,7 @@ def get_cloudflare_ips():
 
         # Extract CIDR blocks from the response text using regular expressions
         cidr_blocks = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', response.text)
-        
+
         for cidr in cidr_blocks:
             ip_network = ipaddress.ip_network(cidr)
             for ip in ip_network:
@@ -84,13 +89,14 @@ def get_cloudflare_ips():
         print("Ошибка при получении IP адресов Cloudflare:", e)
         return set()
 
+
 # Function resolve domain
 def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips):
     try:
         ips = resolver.resolve(domain)
         for ip in ips:
             ip_address = ip.address
-            if (ip_address not in ('127.0.0.1', '0.0.0.1') and 
+            if (ip_address not in ('127.0.0.1', '0.0.0.1') and
                 ip_address not in resolver.nameservers and
                 ip_address not in cloudflare_ips and
                 ip_address not in unique_ips_all_services):  # Check for uniqueness
@@ -98,40 +104,43 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
                 unique_ips_all_services.add(ip_address)
                 print(f"\033[36m{domain} IP адрес: {ip_address}\033[0m")
     except Exception as e:
-        print(f"\033[31mНе удалось обработать: {domain}\033[0m")
+        print(f"\033[31mНе удалось обработать: {domain}\033[0m - {e}")
+
 
 # Function to read configuration file
 def read_config(filename):
     # Default values
-    default_values = ('', 20, 'domain-ip-resolve.txt', '', '', '0.0.0.0', '')
-    
+    default_values = ('', int(20), 'domain-ip-resolve.txt', '', '', '0.0.0.0', '')
+
     try:
         config = configparser.ConfigParser()
-        with open(filename, 'r', encoding='utf-8-sig') as file:  # 'utf-8-sig' для UTF-8 без BOM
+        with open(filename, 'r', encoding='utf-8-sig') as file:
             config.read_file(file)
 
         if 'DomainMapper' in config:
             domain_mapper_config = config['DomainMapper']
 
             service = domain_mapper_config.get('service', default_values[0]) or ''
-            threads = int(domain_mapper_config.get('threads', default_values[1])  or 20)
-            outfilename = domain_mapper_config.get('outfilename', default_values[2]) or 'domain-ip-resolve.txt'
+            threads = int(domain_mapper_config.get('threads', default_values[1])) or int(20)
+            filename = domain_mapper_config.get('filename', default_values[2]) or 'domain-ip-resolve.txt'
             cloudflare = domain_mapper_config.get('cloudflare', default_values[3]) or ''
             filetype = domain_mapper_config.get('filetype', default_values[4]) or ''
             gateway = domain_mapper_config.get('gateway', default_values[5]) or '0.0.0.0'
             run_command = domain_mapper_config.get('run', default_values[6]) or ''
 
-            return service, threads, outfilename, cloudflare, filetype, gateway, run_command
+            return service, threads, filename, cloudflare, filetype, gateway, run_command
         else:
             return default_values
 
     except Exception as e:
+        print(f"Не найдены значения {e}")
         return default_values
+
 
 def main():
     # Read parameters from the configuration file
-    service, threads, outfilename, cloudflare, filetype, gateway, run_command = read_config('config.txt')
-    
+    service, threads, filename, cloudflare, filetype, gateway, run_command = read_config('config.txt')
+
     total_resolved_domains = 0
     selected_services = []
 
@@ -154,7 +163,8 @@ def main():
                 checkbox = "[*]" if service in selected_services else "[ ]"
                 print(f"{idx}. {service.capitalize()}  {checkbox}")
 
-            selection = input("\n\033[32mВведите номер сервиса\033[0m и нажмите Enter (Пустая строка и \033[32mEnter\033[0m для старта): ")
+            selection = input("\n\033[32mВведите номер сервиса\033[0m и нажмите Enter (Пустая строка "
+                              "и \033[32mEnter\033[0m для старта): ")
             if selection == "0":
                 selected_services = list(urls.keys())
             elif selection.isdigit():
@@ -174,16 +184,17 @@ def main():
     elif cloudflare.lower() == 'no':
         include_cloudflare = False
     else:
-        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m - исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
+        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m "
+                                   "- исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
 
     unique_ips_all_services = set()  # Set to store unique IP addresses across all services
 
     # Check if domain-ip-resolve.txt exists and clear it if it does
-    if os.path.exists(outfilename):
-        os.remove(outfilename)
+    if os.path.exists(filename):
+        os.remove(filename)
 
     # DNS resolution for selected services
-    with open(outfilename, 'w', encoding='utf-8-sig') as file:  # Open file for writing
+    with open(filename, 'w', encoding='utf-8-sig') as file:  # Open file for writing
         for service in selected_services:
             result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare, threads)
             file.write(result)  # Write unique IPs directly to the file
@@ -191,42 +202,44 @@ def main():
 
     print("\nПроверка завершена.")
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
-    
+
     # Asking for file format if filetype is not specified in the configuration file
     if not filetype:
-        outfilename_format = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m - 'route add %IP% mask %mask% %gateway%', \033[32mcidr\033[0m - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
-        if outfilename_format.lower() == 'cidr':
-            # Handle VLSM format here
-            with open(outfilename, 'r', encoding='utf-8-sig') as file:
+        filetype = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m "
+                                   "- 'route add %IP% mask %mask% %gateway%', \033[32mcidr\033[0m "
+                                   "- 'IP/mask', \033[32mEnter\033[0m - только IP: ")
+        if filetype.lower() == 'cidr':
+            # Handle CIDR format here
+            with open(filename, 'r', encoding='utf-8-sig') as file:
                 ips = file.readlines()
-            with open(outfilename, 'w', encoding='utf-8-sig') as file:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
-        elif outfilename_format.lower() == 'win':
+        elif filetype.lower() == 'win':
             # Handle Windows format here
             gateway_input = input(f"Укажите шлюз (\033[32mEnter\033[0m - {gateway}): ")
             if gateway_input:
                 gateway = gateway_input.strip()
-            with open(outfilename, 'r', encoding='utf-8-sig') as file:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
                 ips = file.readlines()
-            with open(outfilename, 'w', encoding='utf-8-sig') as file:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
         else:
             # Handle default IP address format here (no modification needed)
             pass
     elif filetype.lower() == 'cidr':
-        # Handle VLSM format if specified in the configuration file
-        with open(outfilename, 'r') as file:
+        # Handle CIDR format if specified in the configuration file
+        with open(filename, 'r') as file:
             ips = file.readlines()
-        with open(outfilename, 'w') as file:
+        with open(filename, 'w') as file:
             for ip in ips:
                 file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
     elif filetype.lower() == 'win':
         # Handle Windows format if specified in the configuration file
-        with open(outfilename, 'r', encoding='utf-8-sig') as file:
+        with open(filename, 'r', encoding='utf-8-sig') as file:
             ips = file.readlines()
-        with open(outfilename, 'w', encoding='utf-8-sig') as file:
+        with open(filename, 'w', encoding='utf-8-sig') as file:
             for ip in ips:
                 file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
 
@@ -235,8 +248,10 @@ def main():
         print("\nВыполнение команды после завершения программы...")
         os.system(run_command)
     else:
-        print("Результаты сохранены в файл:", outfilename)
-        input("Нажмите \033[32mEnter\033[0m для продолжения...") # Для пользователей Windows при запуске из проводника
+        print("Результаты сохранены в файл:", filename)
+        if os.name == 'nt':  # Для пользователей Windows при запуске из проводника
+            input("Нажмите \033[32mEnter\033[0m для продолжения...")
+
 
 if __name__ == "__main__":
     main()
