@@ -109,37 +109,39 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
 
 # Function to read configuration file
 def read_config(filename):
-    # Default values
-    default_values = ('', int(20), 'domain-ip-resolve.txt', '', '', '0.0.0.0', '')
-
     try:
         config = configparser.ConfigParser()
         with open(filename, 'r', encoding='utf-8-sig') as file:
             config.read_file(file)
-
         if 'DomainMapper' in config:
-            domain_mapper_config = config['DomainMapper']
+            config = config['DomainMapper']
+        service = config.get('service') or ''
+        threads = int(config.get('threads') or 20)
+        filename = config.get('filename') or 'domain-ip-resolve.txt'
+        cloudflare = config.get('cloudflare') or ''
+        filetype = config.get('filetype') or ''
+        gateway = config.get('gateway') or '0.0.0.0'
+        run_command = config.get('run') or ''
 
-            service = domain_mapper_config.get('service', default_values[0]) or ''
-            threads = int(domain_mapper_config.get('threads', default_values[1])) or int(20)
-            filename = domain_mapper_config.get('filename', default_values[2]) or 'domain-ip-resolve.txt'
-            cloudflare = domain_mapper_config.get('cloudflare', default_values[3]) or ''
-            filetype = domain_mapper_config.get('filetype', default_values[4]) or ''
-            gateway = domain_mapper_config.get('gateway', default_values[5]) or '0.0.0.0'
-            run_command = domain_mapper_config.get('run', default_values[6]) or ''
-
-            return service, threads, filename, cloudflare, filetype, gateway, run_command
-        else:
-            return default_values
+        print("Загружена конфигурация из config.ini.")
+        return service, threads, filename, cloudflare, filetype, gateway, run_command
 
     except Exception as e:
-        print(f"Не найдены значения {e}")
-        return default_values
+        print(f"Ошибка загрузки конфигурации: {e}")
+        service = ''
+        threads = int(20)
+        filename = 'domain-ip-resolve.txt'
+        cloudflare = ''
+        filetype = ''
+        gateway = '0.0.0.0'
+        run_command = ''
+
+        return service, threads, filename, cloudflare, filetype, gateway, run_command
 
 
 def main():
     # Read parameters from the configuration file
-    service, threads, filename, cloudflare, filetype, gateway, run_command = read_config('config.txt')
+    service, threads, filename, cloudflare, filetype, gateway, run_command = read_config('config.ini')
 
     total_resolved_domains = 0
     selected_services = []
@@ -157,7 +159,7 @@ def main():
                 os.system('cls')  # Очистить экран
             else:
                 os.system('clear')
-            print("Выберите сервисы:\n")
+            print("\nВыберите сервисы:\n")
             print("0 - Отметить все")
             for idx, (service, url) in enumerate(urls.items(), 1):
                 checkbox = "[*]" if service in selected_services else "[ ]"
@@ -205,9 +207,10 @@ def main():
 
     # Asking for file format if filetype is not specified in the configuration file
     if not filetype:
-        filetype = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m "
-                                   "- 'route add %IP% mask %mask% %gateway%', \033[32mcidr\033[0m "
-                                   "- 'IP/mask', \033[32mEnter\033[0m - только IP: ")
+        filetype = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m"
+                         " - 'route add %IP% mask %mask% %gateway%', \033[32munix\033[0m"
+                         " - 'ip route %IP%/%mask% %gateway%', \033[32mcidr\033[0m"
+                         " - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
         if filetype.lower() == 'cidr':
             # Handle CIDR format here
             with open(filename, 'r', encoding='utf-8-sig') as file:
@@ -225,9 +228,22 @@ def main():
             with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
+
+        elif filetype.lower() == 'unix':
+            # Handle Unix-like format here
+            gateway_input = input(f"Укажите имя интерфейса или шлюз (\033[32mEnter\033[0m - {gateway}): ")
+            if gateway_input:
+                gateway = gateway_input.strip()
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(f"ip route {ip.strip()}/32 {gateway}\n")
+
         else:
             # Handle default IP address format here (no modification needed)
             pass
+
     elif filetype.lower() == 'cidr':
         # Handle CIDR format if specified in the configuration file
         with open(filename, 'r') as file:
@@ -235,6 +251,7 @@ def main():
         with open(filename, 'w') as file:
             for ip in ips:
                 file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
+
     elif filetype.lower() == 'win':
         # Handle Windows format if specified in the configuration file
         with open(filename, 'r', encoding='utf-8-sig') as file:
@@ -242,6 +259,14 @@ def main():
         with open(filename, 'w', encoding='utf-8-sig') as file:
             for ip in ips:
                 file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
+
+    elif filetype.lower() == 'unix':
+        # Handle Unix-like format if specified in the configuration file
+        with open(filename, 'r', encoding='utf-8-sig') as file:
+            ips = file.readlines()
+        with open(filename, 'w', encoding='utf-8-sig') as file:
+            for ip in ips:
+                file.write(f"ip route {ip.strip()}/32 {gateway}\n")
 
     # Executing the command after the program is completed, if it is specified in the configuration file
     if run_command is not None and run_command.strip():
