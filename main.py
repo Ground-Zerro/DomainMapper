@@ -1,10 +1,11 @@
-﻿import os
-import requests
-import dns.resolver
-from concurrent.futures import ThreadPoolExecutor
+﻿import configparser
 import ipaddress
+import os
 import re
-import configparser
+from concurrent.futures import ThreadPoolExecutor
+
+import dns.resolver
+import requests
 
 # URLs
 urls = {
