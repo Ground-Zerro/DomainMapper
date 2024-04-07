@@ -139,9 +139,9 @@ def read_config(filename):
 
 def gateway_input(gateway):
     if not gateway:
-        gateway_input = input(f"Укажите \033[32mшлюз\033[0m или \033[32mимя интерфейса\033[0m: ")
-        if gateway_input:
-            return gateway_input.strip()
+        input_gateway = input(f"Укажите \033[32mшлюз\033[0m или \033[32mимя интерфейса\033[0m: ")
+        if input_gateway:
+            return input_gateway.strip()
     else:
         return gateway
 
@@ -271,7 +271,7 @@ def main():
     else:
         print("Результаты сохранены в файл:", filename)
         if os.name == 'nt':  # Для пользователей Windows при запуске из проводника
-            input("Нажмите \033[32mEnter\033[0m для продолжения...")
+            input("Нажмите \033[32mEnter\033[0m для выхода...")
 
 
 if __name__ == "__main__":
