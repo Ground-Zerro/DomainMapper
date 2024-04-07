@@ -96,10 +96,8 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
         ips = resolver.resolve(domain)
         for ip in ips:
             ip_address = ip.address
-            if (ip_address not in ('127.0.0.1', '0.0.0.1') and
-                ip_address not in resolver.nameservers and
-                ip_address not in cloudflare_ips and
-                ip_address not in unique_ips_all_services):  # Check for uniqueness
+            exclusion_list = ('127.0.0.1', '0.0.0.1', *resolver.nameservers, *cloudflare_ips, *unique_ips_all_services)
+            if ip_address not in exclusion_list:
                 unique_ips_current_service.add(ip_address)
                 unique_ips_all_services.add(ip_address)
                 print(f"\033[36m{domain} IP адрес: {ip_address}\033[0m")
@@ -120,7 +118,7 @@ def read_config(filename):
         filename = config.get('filename') or 'domain-ip-resolve.txt'
         cloudflare = config.get('cloudflare') or ''
         filetype = config.get('filetype') or ''
-        gateway = config.get('gateway') or '0.0.0.0'
+        gateway = config.get('gateway') or ''
         run_command = config.get('run') or ''
 
         print("Загружена конфигурация из config.ini.")
@@ -133,27 +131,30 @@ def read_config(filename):
         filename = 'domain-ip-resolve.txt'
         cloudflare = ''
         filetype = ''
-        gateway = '0.0.0.0'
+        gateway = ''
         run_command = ''
 
         return service, threads, filename, cloudflare, filetype, gateway, run_command
 
 
-def main():
-    # Read parameters from the configuration file
-    service, threads, filename, cloudflare, filetype, gateway, run_command = read_config('config.ini')
+def gateway_input(gateway):
+    if not gateway:
+        gateway_input = input(f"Укажите \033[32mшлюз\033[0m или \033[32mимя интерфейса\033[0m: ")
+        if gateway_input:
+            return gateway_input.strip()
+    else:
+        return gateway
 
-    total_resolved_domains = 0
-    selected_services = []
 
-    # Check if 'service' is specified in the configuration file
+# Function to check if 'service' is specified in the configuration file
+def check_service_config(service):
     if service:
         if service.strip().lower() == "all":
-            selected_services = list(urls.keys())  # Select all available services
+            return list(urls.keys())  # Select all available services
         else:
-            selected_services = [s.strip() for s in service.split(',')]
+            return [s.strip() for s in service.split(',')]
     else:
-        # Interactive service selection
+        selected_services = []
         while True:
             if os.name == 'nt':  # Для пользователей Windows
                 os.system('cls')  # Очистить экран
@@ -179,21 +180,76 @@ def main():
                         selected_services.append(service)
             elif selection == "":
                 break
+        return selected_services
+
+
+# Function to check if to include Cloudflare IPs based on configuration or user input
+def check_include_cloudflare(cloudflare):
+    if cloudflare.lower() == 'yes':
+        return True
+    elif cloudflare.lower() == 'no':
+        return False
+    else:
+        return input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m "
+                     "- исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
+
+
+# Function to process file format
+def process_file_format(filename, filetype, gateway):
+    if not filetype:
+        filetype = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m"
+                         " - 'route add %IP% mask %mask% %gateway%', \033[32munix\033[0m"
+                         " - 'ip route %IP%/%mask% %gateway%', \033[32mcidr\033[0m"
+                         " - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
+
+    if filetype.lower() in ['win', 'unix']:
+        # Обработка файлов разных форматов
+        gateway = gateway_input(gateway)
+
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return
+
+        if ips:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    if filetype.lower() == 'win':
+                        file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
+                    elif filetype.lower() == 'unix':
+                        file.write(f"ip route {ip.strip()}/32 {gateway}\n")
+    elif filetype.lower() == 'cidr':
+        # Обработка CIDR формата
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return
+
+        if ips:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
+    else:
+        # Сохранить только IP адреса
+        pass
+
+
+def main():
+    # Read parameters from the configuration file
+    service, threads, filename, cloudflare, filetype, gateway, run_command = read_config('config.ini')
+
+    total_resolved_domains = 0
+    selected_services = check_service_config(service)
 
     # Check if to include Cloudflare IPs based on configuration or user input
-    if cloudflare.lower() == 'yes':
-        include_cloudflare = True
-    elif cloudflare.lower() == 'no':
-        include_cloudflare = False
-    else:
-        include_cloudflare = input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m "
-                                   "- исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
+    include_cloudflare = check_include_cloudflare(cloudflare)
 
-    unique_ips_all_services = set()  # Set to store unique IP addresses across all services
-
-    # Check if domain-ip-resolve.txt exists and clear it if it does
-    if os.path.exists(filename):
-        os.remove(filename)
+    # Set to store unique IP addresses across all services
+    unique_ips_all_services = set()
 
     # DNS resolution for selected services
     with open(filename, 'w', encoding='utf-8-sig') as file:  # Open file for writing
@@ -206,71 +262,11 @@ def main():
     print(f"Сопоставлено IP адресов доменам: {total_resolved_domains}")
 
     # Asking for file format if filetype is not specified in the configuration file
-    if not filetype:
-        filetype = input("\nВыберите в каком формате сохранить файл: \n\033[32mwin\033[0m"
-                         " - 'route add %IP% mask %mask% %gateway%', \033[32munix\033[0m"
-                         " - 'ip route %IP%/%mask% %gateway%', \033[32mcidr\033[0m"
-                         " - 'IP/mask', \033[32mEnter\033[0m - только IP: ")
-        if filetype.lower() == 'cidr':
-            # Handle CIDR format here
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
-        elif filetype.lower() == 'win':
-            # Handle Windows format here
-            gateway_input = input(f"Укажите шлюз (\033[32mEnter\033[0m - {gateway}): ")
-            if gateway_input:
-                gateway = gateway_input.strip()
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
-
-        elif filetype.lower() == 'unix':
-            # Handle Unix-like format here
-            gateway_input = input(f"Укажите имя интерфейса или шлюз (\033[32mEnter\033[0m - {gateway}): ")
-            if gateway_input:
-                gateway = gateway_input.strip()
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f"ip route {ip.strip()}/32 {gateway}\n")
-
-        else:
-            # Handle default IP address format here (no modification needed)
-            pass
-
-    elif filetype.lower() == 'cidr':
-        # Handle CIDR format if specified in the configuration file
-        with open(filename, 'r') as file:
-            ips = file.readlines()
-        with open(filename, 'w') as file:
-            for ip in ips:
-                file.write(f"{ip.strip()}/32\n")  # Assuming /32 subnet mask for all IPs
-
-    elif filetype.lower() == 'win':
-        # Handle Windows format if specified in the configuration file
-        with open(filename, 'r', encoding='utf-8-sig') as file:
-            ips = file.readlines()
-        with open(filename, 'w', encoding='utf-8-sig') as file:
-            for ip in ips:
-                file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
-
-    elif filetype.lower() == 'unix':
-        # Handle Unix-like format if specified in the configuration file
-        with open(filename, 'r', encoding='utf-8-sig') as file:
-            ips = file.readlines()
-        with open(filename, 'w', encoding='utf-8-sig') as file:
-            for ip in ips:
-                file.write(f"ip route {ip.strip()}/32 {gateway}\n")
+    process_file_format(filename, filetype, gateway)
 
     # Executing the command after the program is completed, if it is specified in the configuration file
     if run_command is not None and run_command.strip():
-        print("\nВыполнение команды после завершения программы...")
+        print("\nВыполнение команды после завершения скрипта...")
         os.system(run_command)
     else:
         print("Результаты сохранены в файл:", filename)
