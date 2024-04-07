@@ -97,8 +97,10 @@ def resolve_domain(resolver, domain, unique_ips_current_service, unique_ips_all_
         ips = resolver.resolve(domain)
         for ip in ips:
             ip_address = ip.address
-            exclusion_list = ('127.0.0.1', '0.0.0.1', *resolver.nameservers, *cloudflare_ips, *unique_ips_all_services)
-            if ip_address not in exclusion_list:
+            if (ip_address not in ('127.0.0.1', '0.0.0.1') and
+                    ip_address not in resolver.nameservers and
+                    ip_address not in cloudflare_ips and
+                    ip_address not in unique_ips_all_services):  # Check for uniqueness
                 unique_ips_current_service.add(ip_address)
                 unique_ips_all_services.add(ip_address)
                 print(f"\033[36m{domain} IP адрес: {ip_address}\033[0m")
