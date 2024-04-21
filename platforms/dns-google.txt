@@ -218,3 +218,5 @@ oo.gl
 redirector.gvt1.com
 withgoogle.com
 play.google.com
+bard.google.com
+gemini.google.com
