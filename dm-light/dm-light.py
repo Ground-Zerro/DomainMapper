@@ -1,7 +1,8 @@
-import dns.resolver
+import glob
 import os
 from concurrent.futures import ThreadPoolExecutor
-import glob
+
+import dns.resolver
 
 # Сброс счетчиков, объявление переменных
 successful_resolutions = 0
@@ -11,7 +12,6 @@ unresolved_domains_file_name = "unresolved_domains.txt"  # Имя файла с 
 result_file_name = "result.txt"  # Имя файла результатов
 domain_files_pattern = "domain/*.txt"  # Имя папки с txt файлами DNS
 pub_dns = "8.8.8.8"  # Публичный DNS № 1
-pub_dns_alt = "208.67.222.222"  # Публичный DNS № 2
 
 
 # Постобработка файла вывода
@@ -101,7 +101,7 @@ def resolve_dns_in_threads(domain_files, result_file, num_threads=20):
     
     print(f"\nСопоставлено IP адресов доменам:", successful_resolutions)
     print(f"Не удалось обработать доменных имен:", failed_resolutions)
-    input("Нажмите \033[32mEnter\033[0m для продолжения...")  # Для пользователей Windows при запуске из проводника
+    input("Нажмите Enter для продолжения...")  # Для пользователей Windows при запуске из проводника
 
 
 if __name__ == "__main__":
