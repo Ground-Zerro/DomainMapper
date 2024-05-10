@@ -43,3 +43,4 @@ trc9i.chat.openai.com
 universe.openai.com
 url3243.email.openai.com
 www.openai.com
+chatgpt.com
