@@ -13,8 +13,8 @@ unresolved_domains = set()
 unresolved_domains_file_name = "unresolved_domains.txt"  # Имя файла с необработанными доменами
 result_file_name = "result.txt"  # Имя файла результатов
 domain_files_pattern = "domain/*.txt"  # Имя папки с txt файлами DNS
-pub_dns_primary = "8.8.8.8"  # Публичный DNS № 1
-pub_dns_secondary = "8.8.4.4"  # Публичный DNS № 2
+pub_dns_primary = "212.14.192.131"  # Публичный DNS № 1
+pub_dns_secondary = "212.122.1.2"  # Публичный DNS № 2
 max_requests = 20  # Максимальное число запросов к DNS
 
 
