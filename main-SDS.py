@@ -2,7 +2,7 @@ import configparser
 import ipaddress
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import dns.resolver
 import requests
@@ -23,7 +23,6 @@ def load_urls(url):
         print(f"Ошибка при загрузке списка платформ: {e}")
         return {}
 
-
 # Load URLs from external file
 platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb.txt"
 urls = load_urls(platform_db_url)
@@ -39,11 +38,11 @@ dns_servers = {
     'AdGuard DNS': ['94.140.14.14', '94.140.15.15']
 }
 
-
 # Function to resolve DNS
-def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads, cloudflare_ips_count, null_ips_count, resolver_nameservers):
+def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudflare, threads, cloudflare_ips_count,
+                          null_ips_count, resolver_nameserver_pairs):
     try:
-        print(f"Загрузка данных - {service}")
+        print(f"\033[33mЗагрузка данных - {service}\033[0m")
         response = requests.get(url)
         response.raise_for_status()
         dns_names = response.text.split('\n')
@@ -55,17 +54,17 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
 
         unique_ips_current_service = set()
 
-        print(f"Анализ DNS имен платформы: {service}")
+        print(f"\033[33mАнализ DNS имен платформы: {service}\033[0m")
 
         with ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
-            for domain in dns_names:
-                if domain.strip():
-                    future = executor.submit(resolve_domain, domain, unique_ips_current_service,
-                                             unique_ips_all_services, cloudflare_ips, cloudflare_ips_count, null_ips_count, resolver_nameservers)
-                    futures.append(future)
+            for nameserver_pair in resolver_nameserver_pairs:
+                future = executor.submit(resolve_domains_with_nameservers, dns_names, unique_ips_current_service,
+                                         unique_ips_all_services, cloudflare_ips, cloudflare_ips_count, null_ips_count,
+                                         nameserver_pair)
+                futures.append(future)
 
-            for future in futures:
+            for future in as_completed(futures):
                 future.result()
 
         print(f"Список IP-адресов для платформы {service} создан.")
@@ -73,7 +72,6 @@ def resolve_dns_and_write(service, url, unique_ips_all_services, include_cloudfl
     except Exception as e:
         print(f"Не удалось сопоставить IP адреса {service} его доменным именам.", e)
         return ""
-
 
 # Function to get Cloudflare IP addresses
 def get_cloudflare_ips():
@@ -94,34 +92,32 @@ def get_cloudflare_ips():
         print("Ошибка при получении IP адресов Cloudflare:", e)
         return set()
 
-
-# Function resolve domain
-def resolve_domain(domain, unique_ips_current_service, unique_ips_all_services, cloudflare_ips, cloudflare_ips_count, null_ips_count, resolver_nameservers):
-    try:
-        for nameserver in resolver_nameservers:
-            resolver = dns.resolver.Resolver()
-            resolver.nameservers = [nameserver]
-            resolver.rotate = True
-            resolver.timeout = 1
-            resolver.lifetime = 1
-            try:
-                ips = resolver.resolve(domain)
-                for ip in ips:
-                    ip_address = ip.address
-                    if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in resolver.nameservers:
-                        null_ips_count[0] += 1
-                    elif ip_address in cloudflare_ips:
-                        cloudflare_ips_count[0] += 1
-                    elif ip_address not in unique_ips_all_services:
-                        unique_ips_current_service.add(ip_address)
-                        unique_ips_all_services.add(ip_address)
-                        print(f"\033[36m{domain} IP адрес: {ip_address}\033[0m")
-                break
-            except Exception as e:
-                continue
-    except Exception as e:
-        print(f"\033[31mНе удалось обработать: {domain}\033[0m - {e}")
-
+# Function resolve domain using a pair of DNS servers
+def resolve_domains_with_nameservers(domains, unique_ips_current_service, unique_ips_all_services, cloudflare_ips,
+                                     cloudflare_ips_count, null_ips_count, nameservers):
+    for domain in domains:
+        domain = domain.strip()
+        if domain:
+            for nameserver in nameservers:
+                resolver = dns.resolver.Resolver()
+                resolver.nameservers = [nameserver]
+                resolver.rotate = False
+                resolver.timeout = 1
+                resolver.lifetime = 1
+                try:
+                    ips = resolver.resolve(domain)
+                    for ip in ips:
+                        ip_address = ip.address
+                        if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in resolver.nameservers:
+                            null_ips_count[0] += 1
+                        elif ip_address in cloudflare_ips:
+                            cloudflare_ips_count[0] += 1
+                        elif ip_address not in unique_ips_all_services:
+                            unique_ips_current_service.add(ip_address)
+                            unique_ips_all_services.add(ip_address)
+                            print(f"\033[36m{domain} IP адрес: {ip_address} через DNS сервер: {nameserver}\033[0m")
+                except Exception as e:
+                    print(f"\033[31mНе удалось разрешить {domain} через DNS сервер {nameserver}: {e}\033[0m")
 
 # Function to read configuration file
 def read_config(filename):
@@ -154,7 +150,6 @@ def gateway_input(gateway):
     else:
         return gateway
 
-
 # Function to check if 'service' is specified in the configuration file
 def check_service_config(service):
     if service:
@@ -170,25 +165,15 @@ def check_service_config(service):
             else:
                 os.system('clear')
             print("\nВыберите сервисы:\n")
-            print("0 - Отметить все")
             for idx, (service, url) in enumerate(urls.items(), 1):
-                checkbox = "[*]" if service in selected_services else "[ ]"
-                print(f"{idx}. {service.capitalize()}  {checkbox}")
+                print(f"{idx}. {service.capitalize()}")
 
-            selection = input("\n\033[32mВведите номер сервиса\033[0m и нажмите Enter (Пустая строка "
-                              "и \033[32mEnter\033[0m для старта): ")
-            if selection == "0":
-                selected_services = list(urls.keys())
-            elif selection.isdigit():
-                idx = int(selection) - 1
-                if 0 <= idx < len(urls):
-                    service = list(urls.keys())[idx]
-                    if service in selected_services:
-                        selected_services.remove(service)
-                    else:
-                        selected_services.append(service)
-            elif selection == "":
-                break
+            selection = input("\nУкажите номера сервисов через пробел и нажмите \033[32mEnter\033[0m: ")
+            if selection.strip():
+                selections = selection.split()
+                selected_services = [list(urls.keys())[int(sel) - 1] for sel in selections if sel.isdigit()
+                                     and 1 <= int(sel) <= len(urls)]
+            break
         return selected_services
 
 def check_include_cloudflare(cloudflare):
@@ -197,7 +182,7 @@ def check_include_cloudflare(cloudflare):
     elif cloudflare.lower() == 'no':
         return False
     else:
-        return input("Исключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m "
+        return input("\nИсключить IP адреса Cloudflare из итогового списка? (\033[32myes\033[0m "
                      "- исключить, \033[32mEnter\033[0m - оставить): ").strip().lower() == "yes"
 
 def check_dns_servers():
@@ -209,7 +194,7 @@ def check_dns_servers():
             os.system('cls')
         else:
             os.system('clear')
-        print("Какие DNS сервера использовать?")
+        print("Какие DNS сервера использовать?\n")
         print(f"1. Системные: {', '.join(system_dns_servers)}")
         print("2. Google: 8.8.8.8 и 8.8.4.4")
         print("3. Quad9: 9.9.9.9 и 149.112.112.112")
@@ -218,33 +203,32 @@ def check_dns_servers():
         print("6. CleanBrowsing: 185.228.168.9 и 185.228.169.9")
         print("7. Alternate DNS: 76.76.19.19 и 76.223.122.150")
         print("8. AdGuard DNS: 94.140.14.14 и 94.140.15.15")
-        print("9. Завершить выбор")
 
-        selection = input("\n\033[32mВведите номер сервера\033[0m и нажмите Enter: ")
-        if selection.isdigit():
-            selection = int(selection)
-            if selection == 1:
-                selected_dns_servers.extend(system_dns_servers)
-            elif selection == 2:
-                selected_dns_servers.extend(dns_servers['Google'])
-            elif selection == 3:
-                selected_dns_servers.extend(dns_servers['Quad9'])
-            elif selection == 4:
-                selected_dns_servers.extend(dns_servers['OpenDNS'])
-            elif selection == 5:
-                selected_dns_servers.extend(dns_servers['Cloudflare'])
-            elif selection == 6:
-                selected_dns_servers.extend(dns_servers['CleanBrowsing'])
-            elif selection == 7:
-                selected_dns_servers.extend(dns_servers['Alternate DNS'])
-            elif selection == 8:
-                selected_dns_servers.extend(dns_servers['AdGuard DNS'])
-            elif selection == 9:
-                break
-        elif selection == "":
+        selection = input("\nУкажите номера DNS серверов через пробел и нажмите \033[32mEnter\033[0m: ")
+        if selection.strip():
+            selections = selection.split()
+            for sel in selections:
+                if sel.isdigit():
+                    sel = int(sel)
+                    if sel == 1:
+                        selected_dns_servers.extend(system_dns_servers)
+                    elif sel == 2:
+                        selected_dns_servers.extend(dns_servers['Google'])
+                    elif sel == 3:
+                        selected_dns_servers.extend(dns_servers['Quad9'])
+                    elif sel == 4:
+                        selected_dns_servers.extend(dns_servers['OpenDNS'])
+                    elif sel == 5:
+                        selected_dns_servers.extend(dns_servers['Cloudflare'])
+                    elif sel == 6:
+                        selected_dns_servers.extend(dns_servers['CleanBrowsing'])
+                    elif sel == 7:
+                        selected_dns_servers.extend(dns_servers['Alternate DNS'])
+                    elif sel == 8:
+                        selected_dns_servers.extend(dns_servers['AdGuard DNS'])
             break
 
-    return selected_dns_servers if selected_dns_servers else system_dns_servers
+    return [selected_dns_servers[i:i+2] for i in range(0, len(selected_dns_servers), 2)]
 
 def process_file_format(filename, filetype, gateway):
     if not filetype:
@@ -290,22 +274,22 @@ def main():
 
     total_resolved_domains = 0
     selected_services = check_service_config(service)
-
+    resolver_nameserver_pairs = check_dns_servers()  # Get selected DNS server pairs
     include_cloudflare = check_include_cloudflare(cloudflare)
 
     unique_ips_all_services = set()
     cloudflare_ips_count = [0]  # To count the number of Cloudflare IPs excluded
     null_ips_count = [0]  # To count the number of null IPs excluded
-    resolver_nameservers = check_dns_servers()  # Get selected DNS servers
 
     with open(filename, 'w', encoding='utf-8-sig') as file:
         for service in selected_services:
-            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare, threads, cloudflare_ips_count, null_ips_count, resolver_nameservers)
+            result = resolve_dns_and_write(service, urls[service], unique_ips_all_services, include_cloudflare,
+                                           threads, cloudflare_ips_count, null_ips_count, resolver_nameserver_pairs)
             file.write(result)
             total_resolved_domains += len(result.split('\n')) - 1
 
     print("\nПроверка завершена.")
-    print(f"Использовались DNS сервера: {', '.join(resolver_nameservers)}")
+    print(f"Использовались DNS сервера: {', '.join([', '.join(pair) for pair in resolver_nameserver_pairs])}")
     if include_cloudflare:
         print(f"Исключено IP-адресов Cloudflare: {cloudflare_ips_count[0]}")
     print(f"Исключено IP-адресов 'заглушек' провайдера: {null_ips_count[0]}")
