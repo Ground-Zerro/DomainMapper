@@ -326,8 +326,8 @@ async def main():
             file.write(result)
 
     print("\n\033[33mПроверка завершена.\033[0m")
-    print(
-        f"Использовались DNS сервера: {', '.join([f'{pair[0]} ({', '.join(pair[1])})' for pair in selected_dns_servers])}")
+    print("Использовались DNS сервера: " + ', '.join(
+        [f'{pair[0]} ({", ".join(pair[1])})' for pair in selected_dns_servers]))
     if include_cloudflare:
         print(f"Исключено IP-адресов Cloudflare: {cloudflare_ips_count[0]}")
     print(f"Исключено IP-адресов 'заглушек': {null_ips_count[0]}")
