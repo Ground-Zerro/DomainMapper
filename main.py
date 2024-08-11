@@ -243,12 +243,13 @@ def check_dns_servers(dns_servers, dns_server_indices):
     return selected_dns_servers
 
 
-def process_file_format(filename, filetype, gateway):
+def process_file_format(filename, filetype, gateway, selected_services):
     if not filetype:
         filetype = input("\n\033[33mВ каком формате сохранить файл?\033[0m"
                          "\n\033[32mwin\033[0m - route add IP mask MASK GATEWAY"
                          "\n\033[32munix\033[0m - ip route IP/MASK GATEWAY"
                          "\n\033[32mcidr\033[0m - IP/MASK"
+                         "\n\033[32mmt-al\033[0m - Mikrotik ip/firewall/address-list add syntax"
                          "\n\033[32mПустое значение\033[0m - только IP"
                          "\nВаш выбор: ")
 
@@ -281,6 +282,22 @@ def process_file_format(filename, filetype, gateway):
             with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"{ip.strip()}/32\n")
+    elif filetype.lower() == 'mt-al':
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return
+
+        if ips:
+            address_list_name = input("\nВведите название списка адресов (address-list): ")
+            selected_service = ','.join(selected_services)
+            if not address_list_name:
+                address_list_name = 'address-list-name'
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(f"ip/firewall/address-list add list={address_list_name} comment={selected_service} address={ip.strip()}/32\n")
     else:
         pass
 
@@ -333,7 +350,7 @@ async def main():
     print(f"Исключено IP-адресов 'заглушек': {null_ips_count[0]}")
     print(f"Разрешено IP-адресов из DNS имен: {len(unique_ips_all_services)}")
 
-    process_file_format(filename, filetype, gateway)
+    process_file_format(filename, filetype, gateway, selected_services)
 
     if run_command:
         print("\nВыполнение команды после завершения скрипта...")
