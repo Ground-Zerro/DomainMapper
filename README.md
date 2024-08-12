@@ -36,7 +36,7 @@
 
 
 **Зависимости:** Для работы Domain Mapper необходимо наличие следующих библиотек Python:
-- requests, dnspython, ipaddress, configparser, httpx
+- requests, dnspython, ipaddress, configparser, httpx, colorama
 
 *Не забудьте установить их перед запуском:*
 ```
