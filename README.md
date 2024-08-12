@@ -20,7 +20,6 @@
 - Search engines
 
 
-
 **Функции:**
 - Скрипт загружает списки доменных имен Antifilter - community edition, а также популярных сервисов и разрешает их в IP-адреса используя публичные DNS-сервера.
 - Итоговый список содержит только уникальные IP-адреса исключая дубликаты, также фильтруются IP-адреса самих DNS-серверов, заглушки в виде редиректа на localhost и (по желанию) IP-адреса Cloudflare.
@@ -45,18 +44,12 @@ pip3 install -r requirements.txt
 ```
 
 
-
 **Использование:**
 
-
 - Запустить с помощью Python. Для работы необходим только "main.py" и (по желанию) файл "config.ini".
-- *Beta:* Запустить PowerShell и выполнить команду:
-```
-irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Win.bat -OutFile "$env:TEMP\Win.bat"; cmd /c "$env:TEMP\Win.bat"
-```
+
 
 
 
 ###### Протестировано в Ubuntu 20.04 и Windows 10/11
-
 
