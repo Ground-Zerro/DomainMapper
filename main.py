@@ -11,7 +11,7 @@ import httpx
 from colorama import Fore, Style
 from colorama import init
 
-#Цвета
+# Цвета
 init(autoreset=True)
 def yellow(text):
     return f"{Fore.YELLOW}{text}{Style.RESET_ALL}"
@@ -51,7 +51,7 @@ def read_config(filename):
         print(f"Файл результатов: {filename}")
         print(f"Формат сохранения: {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'не указан'}")
         print(f"Шлюз для маршрутов: {gateway if gateway else 'не указан'}")
-        print(f"Выполнить при завершении: {run_command if run_command else 'не указано'}")
+        print(f"Выполнить по завершению: {run_command if run_command else 'не указано'}")
         return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices
 
     except Exception as e:
@@ -146,10 +146,10 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
                 elif ip_address in cloudflare_ips:
                     cloudflare_ips_count[0] += 1
                 else:
-                    print(f"{Fore.CYAN}{domain} IP адрес: {ip_address} получен от - {dns_server_name}{Style.RESET_ALL}")
+                    print(f"{Fore.CYAN}{domain} IP-адрес: {ip_address} - {dns_server_name}{Style.RESET_ALL}")
             return ips
         except Exception as e:
-            print(f"{Fore.RED}Не удалось разрешить {domain} через {dns_server_name}{Style.RESET_ALL}")
+            print(f"{Fore.RED}Не удалось получить IP-адрес: {domain} - {dns_server_name}{Style.RESET_ALL}")
             return []
 
 
@@ -352,7 +352,7 @@ async def main():
             tasks.append(resolve_dns(service, local_dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
                                      semaphore, null_ips_count, cloudflare_ips_count))
         else:
-            # Загрузка DNS имен служб
+            # Загрузка DNS имен сервисов
             dns_names_url = urls[service]
             async with httpx.AsyncClient() as client:
                 response = await client.get(dns_names_url)
