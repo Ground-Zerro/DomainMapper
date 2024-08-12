@@ -74,6 +74,7 @@ if ERRORLEVEL 1 (
     exit /b 1
 )
 
+move /y domain-ip-resolve.txt %UserProfile%\Desktop\domain-ip-resolve.txt
 echo Программа завершена.
 endlocal
 del /q /f main.py
