@@ -1,74 +1,79 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 > NUL
 
-REM Проверяем, установлен ли Python 3
+REM ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤Г╤Б╤В╨░╨╜╨╛╨▓╨╗╨╡╨╜ ╨╗╨╕ Python 3
 python --version 2>NUL | findstr /I "Python 3" >NUL
 if ERRORLEVEL 1 (
-	echo Python 3 не установлен.
-	choice /C YN /M "Установить?"
-	if ERRORLEVEL 2 (
-		echo Без Python 3 ничего не получится...
-		pause
-		exit /b 1
-	) else (
-        echo Загрузка дистрибутива...
-        powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.5/python-3.12.5-amd64.exe' -OutFile 'python_installer.exe'"
-        REM Проверяем, был ли успешно скачан файл
+    echo Python 3 ╨╜╨╡ ╤Г╤Б╤В╨░╨╜╨╛╨▓╨╗╨╡╨╜.
+    choice /C YN /M "╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М?"
+    if ERRORLEVEL 2 (
+        echo ╨С╨╡╨╖ Python 3 ╨╜╨╕╤З╨╡╨│╨╛ ╨╜╨╡ ╨┐╨╛╨╗╤Г╤З╨╕╤В╤Б╤П...
+        pause
+        exit /b 1
+    ) else (
+        echo ╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨┤╨╕╤Б╤В╤А╨╕╨▒╤Г╤В╨╕╨▓╨░...
+        powershell -Command "if ($PSVersionTable.PSVersion.Major -ge 3) {Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.5/python-3.12.5-amd64.exe' -OutFile 'python_installer.exe'} else {Start-BitsTransfer -Source 'https://www.python.org/ftp/python/3.12.5/python-3.12.5-amd64.exe' -Destination 'python_installer.exe'}"
+        
+        REM ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╨▒╤Л╨╗ ╨╗╨╕ ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╤Б╨║╨░╤З╨░╨╜ ╤Д╨░╨╣╨╗
         if not exist "python_installer.exe" (
-			echo Ошибка загрузки установщика Python 3.
-			pause
-			exit /b 1
-		)
-		REM Установка Python 3
-		echo Установка...
-		echo PS - не забудьте ее разрешить в соседнем окне
-		python_installer.exe /quiet InstallAllUsers=1 PrependPath=1
-		del /q /f python_installer.exe
-		REM Нужно обновить стсиемные PATH, но в этом сеансе не получится
-		echo Вроде бы все прошло удачно, но нужно обновить окружение, запустите этот скрипт еще раз.
-		pause
-		exit
-	)
+            echo ╨Ю╤И╨╕╨▒╨║╨░ ╨╖╨░╨│╤А╤Г╨╖╨║╨╕ ╤Г╤Б╤В╨░╨╜╨╛╨▓╤Й╨╕╨║╨░ Python 3.
+            pause
+            exit /b 1
+        )
+        
+        REM ╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ Python 3
+        echo ╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░...
+        echo PS - ╨╜╨╡ ╨╖╨░╨▒╤Г╨┤╤М╤В╨╡ ╨╡╨╡ ╤А╨░╨╖╤А╨╡╤И╨╕╤В╤М ╨▓ ╤Б╨╛╤Б╨╡╨┤╨╜╨╡╨╝ ╨╛╨║╨╜╨╡
+        python_installer.exe /quiet InstallAllUsers=1 PrependPath=1
+        del /q /f python_installer.exe
+        
+        REM ╨Э╤Г╨╢╨╜╨╛ ╨╛╨▒╨╜╨╛╨▓╨╕╤В╤М ╤Б╨╕╤Б╤В╨╡╨╝╨╜╤Л╨╡ PATH, ╨╜╨╛ ╨▓ ╤Н╤В╨╛╨╝ ╤Б╨╡╨░╨╜╤Б╨╡ ╨╜╨╡ ╨┐╨╛╨╗╤Г╤З╨╕╤В╤Б╤П
+        echo ╨Т╤А╨╛╨┤╨╡ ╨▒╤Л ╨▓╤Б╨╡ ╨┐╤А╨╛╤И╨╗╨╛ ╤Г╨┤╨░╤З╨╜╨╛, ╨╜╨╛ ╨╜╤Г╨╢╨╜╨╛ ╨╛╨▒╨╜╨╛╨▓╨╕╤В╤М ╨╛╨║╤А╤Г╨╢╨╡╨╜╨╕╨╡, ╨╖╨░╨┐╤Г╤Б╤В╨╕╤В╨╡ ╤Н╤В╨╛╤В ╤Б╨║╤А╨╕╨┐╤В ╨╡╤Й╨╡ ╤А╨░╨╖.
+        pause
+        exit
+    )
 ) else (
-	echo Похоже Python 3 имеется в системе.
-	)
+    echo ╨Я╨╛╤Е╨╛╨╢╨╡ Python 3 ╨╕╨╝╨╡╨╡╤В╤Б╤П ╨▓ ╤Б╨╕╤Б╤В╨╡╨╝╨╡.
+)
 
-REM Проверяем наличие необходимых библиотек
+REM ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝ ╨╜╨░╨╗╨╕╤З╨╕╨╡ ╨╜╨╡╨╛╨▒╤Е╨╛╨┤╨╕╨╝╤Л╤Е ╨▒╨╕╨▒╨╗╨╕╨╛╤В╨╡╨║
 set "modules=requests dnspython ipaddress configparser httpx"
 
 for %%m in (%modules%) do (
     pip show %%m >NUL 2>&1
     if ERRORLEVEL 1 (
-        echo Установка библиотеки %%m...
+        echo ╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨▒╨╕╨▒╨╗╨╕╨╛╤В╨╡╨║╨╕ %%m...
         pip install %%m
         if ERRORLEVEL 1 (
-            echo Не удалось установить библиотеку %%m. Проверьте pip.
+            echo ╨Э╨╡ ╤Г╨┤╨░╨╗╨╛╤Б╤М ╤Г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨▒╨╕╨▒╨╗╨╕╨╛╤В╨╡╨║╤Г %%m. ╨Я╤А╨╛╨▓╨╡╤А╤М╤В╨╡ pip.
             exit /b 1
         )
     )
 )
 
 cls
-REM Скачиваем main.py
-echo Загрузка Domain Mapper...
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/main.py' -OutFile 'main.py'"
+REM ╨б╨║╨░╤З╨╕╨▓╨░╨╡╨╝ main.py
+echo ╨Ч╨░╨│╤А╤Г╨╖╨║╨░ Domain Mapper...
+powershell -Command "if ($PSVersionTable.PSVersion.Major -ge 3) {Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/main.py' -OutFile 'main.py'} else {Start-BitsTransfer -Source 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/main.py' -Destination 'main.py'}"
+
 if not exist "main.py" (
-    echo Ошибка загрузки Domain Mapper.
-	pause
+    echo ╨Ю╤И╨╕╨▒╨║╨░ ╨╖╨░╨│╤А╤Г╨╖╨║╨╕ Domain Mapper.
+    pause
     exit /b 1
 )
 
-REM Запуск main.py в Python 3
-echo Запускаем...
+REM ╨Ч╨░╨┐╤Г╤Б╨║ main.py ╨▓ Python 3
+echo ╨Ч╨░╨┐╤Г╤Б╨║╨░╨╡╨╝...
 python main.py
 if ERRORLEVEL 1 (
-    echo Ошибка выполнения main.py.
+    echo ╨Ю╤И╨╕╨▒╨║╨░ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╨╕╤П main.py.
     pause
     del /q /f main.py
     exit /b 1
 )
 
-echo Программа завершена.
+echo ╨Я╤А╨╛╨│╤А╨░╨╝╨╝╨░ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░.
 endlocal
 del /q /f main.py
 exit
