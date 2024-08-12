@@ -29,7 +29,8 @@ if ERRORLEVEL 1 (
         del /q /f python_installer.exe
         
         REM Нужно обновить системные PATH, но в этом сеансе не получится
-        echo Вроде бы все прошло удачно, но нужно обновить окружение, запустите этот скрипт еще раз.
+        echo Вроде бы все прошло удачно, но нужно обновить окружение,
+        echo закройте это окно и запустите скрипт еще раз.
         pause
         exit
     )
@@ -52,7 +53,7 @@ for %%m in (%modules%) do (
     )
 )
 
-cls
+
 REM Скачиваем main.py
 echo Загрузка Domain Mapper...
 powershell -Command "if ($PSVersionTable.PSVersion.Major -ge 3) {Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/main.py' -OutFile 'main.py'} else {Start-BitsTransfer -Source 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/main.py' -Destination 'main.py'}"
