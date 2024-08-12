@@ -46,8 +46,17 @@ pip3 install -r requirements.txt
 
 
 
-**Использование:** Запустить с помощью Python. Для работы необходим только "main.py" и (по желанию) файл "config.ini".
+**Использование:**
+
+
+- Запустить с помощью Python. Для работы необходим только "main.py" и (по желанию) файл "config.ini".
+- *Beta:* Запустить PowerShell и выполнить команду:
+```
+irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Win.bat -OutFile "$env:TEMP\Win.bat"; cmd /c "$env:TEMP\Win.bat"
+```
 
 
 
 ###### Протестировано в Ubuntu 20.04 и Windows 10/11
+
+
