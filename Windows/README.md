@@ -8,6 +8,11 @@
 
 
 **Использование:**
+- Скачать Win.bat и запустить его.
+
+**Можете попробовать эти варианты:**
+
+*PS: При загрузке меняется формат с 'CRLF' на 'LF' поэтому глючит. Как решить пока не знаю.*
 - Запустить PowerShell и выполнить команду:
 ```
 irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Windows/Win.bat -OutFile "$env:TEMP\Win.bat"; cmd /c "$env:TEMP\Win.bat"
@@ -16,7 +21,3 @@ irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Windows/Win.bat -OutFi
 ```
 powershell -Command "irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Windows/Win.bat -OutFile $env:TEMP\Win.bat" && cmd /c "%TEMP%\Win.bat"
 ```
-- Скачать Win.bat и запустить его.
-
-##### При загрузке на github меняется формат с 'CRLF' в 'LF' поэтому глючит. Как решить пока не знаю.
-
