@@ -25,6 +25,11 @@ def cyan(text):
 def red(text):
     return f"{Fore.RED}{text}{Style.RESET_ALL}"
 
+def magneta(text):
+    return f"{Fore.MAGENTA}{text}{Style.RESET_ALL}"
+
+def blue(text):
+    return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
 
 # Читаем конфигурацию
 def read_config(filename):
@@ -42,21 +47,23 @@ def read_config(filename):
         gateway = config.get('gateway') or ''
         run_command = config.get('run') or ''
         dns_server_indices = list(map(int, config.get('dnsserver', '').split())) if config.get('dnsserver') else []
+        mk_list_name = config.get('listname') or ''
 
         print(f"{yellow('Загружена конфигурация из config.ini:')}")
-        print(f"Сервисы для проверки: {service if service else 'не указаны'}")
-        print(f"Использовать DNS сервер: {dns_server_indices if dns_server_indices else 'не указано'}")
-        print(f"Количество потоков: {request_limit}")
-        print(f"Фильтр Cloudflare: {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'не указано'}")
-        print(f"Файл результатов: {filename}")
-        print(f"Формат сохранения: {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'не указан'}")
-        print(f"Шлюз для маршрутов: {gateway if gateway else 'не указан'}")
-        print(f"Выполнить по завершению: {run_command if run_command else 'не указано'}")
-        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices
+        print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
+        print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
+        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
+        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name
 
     except Exception as e:
-        print(f"{yellow('Ошибка загрузки config.ini:')} {e}\nИспользуются настройки 'по умолчанию'.")
-        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', []
+        print(f"{yellow('Ошибка загрузки config.ini:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
+        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], ''
 
 
 def gateway_input(gateway):
@@ -66,6 +73,15 @@ def gateway_input(gateway):
             return input_gateway.strip()
     else:
         return gateway
+
+# Для microtik
+def mk_list_name_input(mk_list_name):
+    if not mk_list_name:
+        input_mk_list_name = input(f"Введите {green('имя списка')} для firewall: ")
+        if input_mk_list_name:
+            return input_mk_list_name.strip()
+    else:
+        return mk_list_name
 
 
 # Ограничение числа запросов
@@ -134,10 +150,10 @@ async def get_cloudflare_ips():
         return set()
 
 
-async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_count, cloudflare_ips,
-                         cloudflare_ips_count):
+async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed):
     async with semaphore:
         try:
+            total_domains_processed[0] += 1
             response = await resolver.resolve(domain)
             ips = [ip.address for ip in response]
             for ip_address in ips:
@@ -146,15 +162,14 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
                 elif ip_address in cloudflare_ips:
                     cloudflare_ips_count[0] += 1
                 else:
-                    print(f"{Fore.CYAN}{domain} IP-адрес: {ip_address} - {dns_server_name}{Style.RESET_ALL}")
+                    print(f"{Fore.BLUE}{domain} IP-адрес: {ip_address} - {dns_server_name}{Style.RESET_ALL}")
             return ips
         except Exception as e:
             print(f"{Fore.RED}Не удалось получить IP-адрес: {domain} - {dns_server_name}{Style.RESET_ALL}")
             return []
 
 
-async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ips_all_services, semaphore, null_ips_count,
-                      cloudflare_ips_count):
+async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ips_all_services, semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed):
     try:
         print(f"{Fore.YELLOW}Анализ DNS имен платформы {service}...{Style.RESET_ALL}")
 
@@ -165,8 +180,7 @@ async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ip
             for domain in dns_names:
                 domain = domain.strip()
                 if domain:
-                    tasks.append(resolve_domain(domain, resolver, semaphore[server_name], server_name, null_ips_count,
-                                                cloudflare_ips, cloudflare_ips_count))
+                    tasks.append(resolve_domain(domain, resolver, semaphore[server_name], server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed))
 
         results = await asyncio.gather(*tasks)
 
@@ -184,39 +198,47 @@ async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ip
 
 
 def check_service_config(service, urls, local_dns_names):
+    services = []
     if service:
-        if service.strip().lower() == "all":
-            services = list(urls.keys())
+        services = [s.strip() for s in service.split(',')]
+        if "custom" in services:
+            services.remove("custom")
             if local_dns_names:
-                services.append("Мой список DNS")
-            return services
-        else:
-            return [s.strip() for s in service.split(',')]
+                services.append("Custom DNS list")
+        if "all" in services:
+            services = list(urls.keys())
+            if local_dns_names and "Custom DNS list" not in services:
+                services.append("Custom DNS list")
+        elif not services:
+            services = list(urls.keys())
+            if local_dns_names and "Custom DNS list" not in services:
+                services.append("Custom DNS list")
     else:
-        selected_services = []
         while True:
             print(f"\n{yellow('Выберите сервисы:')}")
             print("0. Выбрать все")
             for idx, (service, url) in enumerate(urls.items(), 1):
                 print(f"{idx}. {service.capitalize()}")
             if local_dns_names:
-                print(f"{len(urls) + 1}. Мой список DNS")
+                print(f"{len(urls) + 1}. Custom DNS list")
 
-            selection = input(f"\nУкажите номера сервисов через пробел и нажмите {green('Enter')}: ")
+            selection = input(f"\nУкажите номера платформ через пробел и нажмите {green('Enter')}: ")
             if selection.strip():
                 selections = selection.split()
-                if '0' in selections:  # User selected all services
-                    selected_services = list(urls.keys())
-                    if local_dns_names:
-                        selected_services.append('Мой список DNS')
+                if '0' in selections:
+                    services = list(urls.keys())
+                    if local_dns_names and "Custom DNS list" not in services:
+                        services.append('Custom DNS list')
                     break
                 else:
-                    selected_services = [list(urls.keys())[int(sel) - 1] for sel in selections if sel.isdigit()
-                                         and 1 <= int(sel) <= len(urls)]
+                    services = [list(urls.keys())[int(sel) - 1] for sel in selections if sel.isdigit()
+                                and 1 <= int(sel) <= len(urls)]
                     if str(len(urls) + 1) in selections and local_dns_names:
-                        selected_services.append('Мой список DNS')
+                        services.append('Custom DNS list')
                     break
-        return selected_services
+    return services
+
+
 
 
 # Промт на исключение IP-адресов cloudflare
@@ -231,17 +253,25 @@ def check_include_cloudflare(cloudflare):
 
 
 def check_dns_servers(dns_servers, dns_server_indices):
+    # Получение системных DNS серверов
     system_dns_servers = dns.asyncresolver.Resolver().nameservers
-    selected_dns_servers = []
 
+    # Формирование списка всех доступных серверов
     dns_server_options = [('Системный DNS', system_dns_servers)] + list(dns_servers.items())
 
+    selected_dns_servers = []
+
+    # Если указаны индексы серверов в конфиге
     if dns_server_indices:
-        for idx in dns_server_indices:
-            if 0 <= idx <= len(dns_server_options):
-                selected_dns_servers.append((dns_server_options[idx][0], dns_server_options[idx][1]))
+        if 0 in dns_server_indices:  # Если указано 0, выбираем все доступные DNS серверы
+            selected_dns_servers = dns_server_options
+        else:
+            for idx in dns_server_indices:
+                if 1 <= idx <= len(dns_server_options):  # Корректируем индекс на 1 меньше, чтобы соответствовать списку
+                    selected_dns_servers.append(dns_server_options[idx - 1])
         return selected_dns_servers
 
+    # Если индексы не указаны, запрашиваем у пользователя выбор серверов
     while True:
         print(f"\n{yellow('Какие DNS сервера использовать?')}")
         print("0. Выбрать все")
@@ -259,21 +289,21 @@ def check_dns_servers(dns_servers, dns_server_indices):
                     if sel.isdigit():
                         sel = int(sel)
                         if 1 <= sel <= len(dns_server_options):
-                            selected_dns_servers.append(
-                                (dns_server_options[sel - 1][0], dns_server_options[sel - 1][1]))
+                            selected_dns_servers.append(dns_server_options[sel - 1])
                 break
 
     return selected_dns_servers
 
 
 # Выбор формата сохранения списка разрешенных DNS имен
-def process_file_format(filename, filetype, gateway):
+def process_file_format(filename, filetype, gateway, selected_service, mk_list_name):
     if not filetype:
         filetype = input(f"\n{yellow('В каком формате сохранить файл?')}"
-                         f"\n{green('win')} - route add IP mask MASK GATEWAY"
-                         f"\n{green('unix')} - ip route IP/MASK GATEWAY"
-                         f"\n{green('cidr')} - IP/MASK"
-                         f"\n{green('Пустое значение')} - только IP"
+                         f"\n{green('win')} - route add {cyan('IP')} mask {cyan('MASK GATEWAY')}"
+                         f"\n{green('unix')} - ip route {cyan('IP/MASK GATEWAY')}"
+                         f"\n{green('cidr')} - {cyan('IP/MASK')}"
+                         f"\n{green('mikrotik')} - /ip/firewall/address-list add list={cyan('LIST_NAME')} comment={cyan('SERVICE_NAME')} address={cyan('IP/MASK')}"
+                         f"\n{green('Enter')} - только {cyan('IP')}"
                          f"\nВаш выбор: ")
 
     if filetype.lower() in ['win', 'unix']:
@@ -305,6 +335,24 @@ def process_file_format(filename, filetype, gateway):
             with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
                     file.write(f"{ip.strip()}/32\n")
+
+    elif filetype.lower() == 'mikrotik':
+        mk_list_name = mk_list_name_input(mk_list_name)
+
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return
+
+        if ips:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment={str(selected_service).replace("[", "").replace("]", "").replace("\'", "")} address={ip.strip()}/32\n')
+
+
+
     else:
         pass
 
@@ -312,19 +360,19 @@ def process_file_format(filename, filetype, gateway):
 # Ну чо, погнали?!
 async def main():
     # Инициализация настроек из config.ini
-    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices = read_config('config.ini')
+    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name = read_config('config.ini')
 
     # Load URLs
     platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
     urls = await load_urls(platform_db_url)
 
-    # Load local DNS names from "my-dns-list.txt" if it exists
+    # Load local DNS names from "custom-dns-list.txt" if it exists
     local_dns_names = []
-    if os.path.exists('my-dns-list.txt'):
-        with open('my-dns-list.txt', 'r', encoding='utf-8-sig') as file:
+    if os.path.exists('custom-dns-list.txt'):
+        with open('custom-dns-list.txt', 'r', encoding='utf-8-sig') as file:
             local_dns_names = [line.strip() for line in file if line.strip()]
 
-    # Выбор сервисов
+    # Выбор платформ
     selected_services = check_service_config(service, urls, local_dns_names)
 
     # Загрузка списка DNS-серверов
@@ -337,7 +385,6 @@ async def main():
     # Инициализация IP-адресов Cloudflare
     cloudflare_ips = await get_cloudflare_ips()
 
-
     # Фильтр Cloudflare
     include_cloudflare = check_include_cloudflare(cloudflare)
 
@@ -345,21 +392,21 @@ async def main():
     semaphore = init_semaphores(request_limit)
     null_ips_count = [0]
     cloudflare_ips_count = [0]
+    total_domains_processed = [0]
     tasks = []
 
     for service in selected_services:
-        if service == 'Мой список DNS':
+        if service == 'Custom DNS list':
             tasks.append(resolve_dns(service, local_dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
-                                     semaphore, null_ips_count, cloudflare_ips_count))
+                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed))
         else:
-            # Загрузка DNS имен сервисов
             dns_names_url = urls[service]
             async with httpx.AsyncClient() as client:
                 response = await client.get(dns_names_url)
                 response.raise_for_status()
                 dns_names = response.text.splitlines()
             tasks.append(resolve_dns(service, dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
-                                     semaphore, null_ips_count, cloudflare_ips_count))
+                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed))
 
     results = await asyncio.gather(*tasks)
 
@@ -368,23 +415,23 @@ async def main():
             file.write(result)
 
     print(f"\n{yellow('Проверка завершена.')}")
-    print("Использовались DNS сервера: " + ', '.join(
+    print(f"{Style.BRIGHT}Использовались DNS сервера:{Style.RESET_ALL} " + ', '.join(
         [f'{pair[0]} ({", ".join(pair[1])})' for pair in selected_dns_servers]))
+    print(f"{Style.BRIGHT}Всего обработано DNS имен:{Style.RESET_ALL} {total_domains_processed[0]}.")
     if include_cloudflare:
-        print(f"Исключено IP-адресов Cloudflare: {cloudflare_ips_count[0]}")
-    print(f"Исключено IP-адресов 'заглушек': {null_ips_count[0]}")
-    print(f"Разрешено IP-адресов из DNS имен: {len(unique_ips_all_services)}")
+        print(f"{Style.BRIGHT}Исключено IP-адресов Cloudflare:{Style.RESET_ALL} {cloudflare_ips_count[0]}")
+    print(f"{Style.BRIGHT}Исключено IP-адресов 'заглушек':{Style.RESET_ALL} {null_ips_count[0]}")
+    print(f"{Style.BRIGHT}Разрешено IP-адресов из DNS имен:{Style.RESET_ALL} {len(unique_ips_all_services)}")
 
-    process_file_format(filename, filetype, gateway)
+    process_file_format(filename, filetype, gateway, selected_services, mk_list_name)
 
     if run_command:
         print("\nВыполнение команды после завершения скрипта...")
         os.system(run_command)
     else:
-        print("\nРезультаты сохранены в файл:", filename)
+        print(f"\n{Style.BRIGHT}Результаты сохранены в файл:{Style.RESET_ALL}", filename)
         if os.name == 'nt':
             input(f"Нажмите {green('Enter')} для выхода...")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
