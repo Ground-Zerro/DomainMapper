@@ -349,8 +349,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         if ips:
             with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
-                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment={str(selected_service).replace("[", "").replace("]", "").replace("\'", "")} address={ip.strip()}/32\n')
-
+                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment={str(selected_service).replace("[", "").replace("]", "").replace("{chr(39)}", "")} address={ip.strip()}/32{chr(10)}')
 
 
     else:
