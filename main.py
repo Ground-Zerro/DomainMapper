@@ -31,6 +31,7 @@ def magneta(text):
 def blue(text):
     return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
 
+
 # Читаем конфигурацию
 def read_config(filename):
     try:
@@ -73,15 +74,6 @@ def gateway_input(gateway):
             return input_gateway.strip()
     else:
         return gateway
-
-# Для microtik
-def mk_list_name_input(mk_list_name):
-    if not mk_list_name:
-        input_mk_list_name = input(f"Введите {green('имя списка')} для firewall: ")
-        if input_mk_list_name:
-            return input_mk_list_name.strip()
-    else:
-        return mk_list_name
 
 
 # Ограничение числа запросов
@@ -222,7 +214,7 @@ def check_service_config(service, urls, local_dns_names):
             if local_dns_names:
                 print(f"{len(urls) + 1}. Custom DNS list")
 
-            selection = input(f"\nУкажите номера платформ через пробел и нажмите {green('Enter')}: ")
+            selection = input(f"\nУкажите {green('номера')} платформ через пробел и нажмите {green('Enter')}: ")
             if selection.strip():
                 selections = selection.split()
                 if '0' in selections:
@@ -239,8 +231,6 @@ def check_service_config(service, urls, local_dns_names):
     return services
 
 
-
-
 # Промт на исключение IP-адресов cloudflare
 def check_include_cloudflare(cloudflare):
     if cloudflare.lower() == 'yes':
@@ -249,7 +239,7 @@ def check_include_cloudflare(cloudflare):
         return False
     else:
         return input(f"\nИсключить IP адреса Cloudflare из итогового списка? ({green('yes')} "
-                     f"- исключить, ({green('Enter')} - оставить): ").strip().lower() == "yes"
+                     f"- исключить, {green('Enter')} - оставить): ").strip().lower() == "yes"
 
 
 def check_dns_servers(dns_servers, dns_server_indices):
@@ -278,7 +268,7 @@ def check_dns_servers(dns_servers, dns_server_indices):
         for idx, (name, servers) in enumerate(dns_server_options, 1):
             print(f"{idx}. {name}: {', '.join(servers)}")
 
-        selection = input(f"\nУкажите номера DNS серверов через пробел и нажмите {green('Enter')}: ")
+        selection = input(f"\nУкажите {green('номера')} DNS серверов через пробел и нажмите {green('Enter')}: ")
         if selection.strip():
             selections = selection.split()
             if '0' in selections:
@@ -295,16 +285,35 @@ def check_dns_servers(dns_servers, dns_server_indices):
     return selected_dns_servers
 
 
+
+
+
+# Для microtik ввод комментария comment для firewall
+def mk_list_name_input(mk_list_name):
+    if not mk_list_name:
+        input_mk_list_name = input(f"Введите {green('LIST_NAME')} для firewall: ")
+        if input_mk_list_name:
+            return input_mk_list_name.strip()
+    else:
+        return mk_list_name
+
+
+# Для mikrotik собираем в кучку сервисы
+def mk_comment(selected_service):
+    return ",".join(["".join(word.title() for word in s.split()) for s in selected_service])
+
+
 # Выбор формата сохранения списка разрешенных DNS имен
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name):
     if not filetype:
-        filetype = input(f"\n{yellow('В каком формате сохранить файл?')}"
-                         f"\n{green('win')} - route add {cyan('IP')} mask {cyan('MASK GATEWAY')}"
-                         f"\n{green('unix')} - ip route {cyan('IP/MASK GATEWAY')}"
-                         f"\n{green('cidr')} - {cyan('IP/MASK')}"
-                         f"\n{green('mikrotik')} - /ip/firewall/address-list add list={cyan('LIST_NAME')} comment={cyan('SERVICE_NAME')} address={cyan('IP/MASK')}"
-                         f"\n{green('Enter')} - только {cyan('IP')}"
-                         f"\nВаш выбор: ")
+        filetype = input(f"""
+{yellow('В каком формате сохранить файл?')}
+{green('win')} - route add {cyan('IP')} mask 255.255.255.255 {cyan('GATEWAY')}
+{green('unix')} - ip route {cyan('IP')}/32 {cyan('GATEWAY')}
+{green('cidr')} - {cyan('IP')}/32
+{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/32
+{green('Enter')} - {cyan('IP')}
+Ваш выбор: """)
 
     if filetype.lower() in ['win', 'unix']:
         gateway = gateway_input(gateway)
@@ -349,8 +358,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         if ips:
             with open(filename, 'w', encoding='utf-8-sig') as file:
                 for ip in ips:
-                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment="{",".join(["".join(word.title() for word in s.split()) for s in selected_service])}" address={ip.strip()}/32{chr(10)}')
-
+                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip.strip()}/32{chr(10)}')
 
     else:
         pass
