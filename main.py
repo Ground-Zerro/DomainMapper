@@ -56,7 +56,7 @@ def read_config(filename):
         print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
         print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
-        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
@@ -312,6 +312,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 {green('unix')} - ip route {cyan('IP')}/32 {cyan('GATEWAY')}
 {green('cidr')} - {cyan('IP')}/32
 {green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/32
+{green('ovpn')} - push "route {cyan('IP')} 255.255.255.255"
 {green('Enter')} - {cyan('IP')}
 Ваш выбор: """)
 
@@ -332,6 +333,17 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
                         file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
                     elif filetype.lower() == 'unix':
                         file.write(f"ip route {ip.strip()}/32 {gateway}\n")
+    elif filetype.lower() == 'ovpn':
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                ips = file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return
+        if ips:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(f'push "route {ip.strip()} 255.255.255.255"\n')
     elif filetype.lower() == 'cidr':
         try:
             with open(filename, 'r', encoding='utf-8-sig') as file:
