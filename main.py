@@ -242,8 +242,9 @@ def check_include_cloudflare(cloudflare):
     elif cloudflare.lower() == 'no':
         return False
     else:
-        return input(f"\n{yellow('Исключить IP адреса Cloudflare из итогового списка?')} ({green('yes')} "
-                     f"- исключить, {green('Enter')} - оставить): ").strip().lower() == "yes"
+        return input(f"\n{yellow('Исключить IP адреса Cloudflare из итогового списка?')}"
+                     f"\n{green('yes')} - исключить"
+                     f"\n{green('Enter')} - оставить: ").strip().lower() == "yes"
 
 
 def check_dns_servers(dns_servers, dns_server_indices):
@@ -367,9 +368,6 @@ def group_ips_in_subnets(filename, submask):
                     file.write(subnet + '\n')
 
             print(f"{Style.BRIGHT}IP-адреса агрегированы до /{submask} подсети{Style.RESET_ALL}")
-
-        else:
-            print(f"{red('Неправильная маска подсети:')} {submask}")
 
     except Exception as e:
         print(f"{red('Ошибка при обработке файла:')} {e}")
