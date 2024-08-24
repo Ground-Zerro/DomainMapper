@@ -2,14 +2,12 @@ import asyncio
 import configparser
 import ipaddress
 import os
-import re
 from asyncio import Semaphore
 from collections import defaultdict
 
 import dns.asyncresolver
 import httpx
-from colorama import Fore, Style
-from colorama import init
+from colorama import Fore, Style, init
 
 # Цвета
 init(autoreset=True)
@@ -56,11 +54,11 @@ def read_config(filename):
         print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
         print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети' if subnet == '16' else 'до /24 подсети' if subnet == '24' else 'вЫключена' if subnet == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
         print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Группировка IP-адресов в подсети:{Style.RESET_ALL} {'включена' if subnet == 'yes' else 'выключена' if subnet == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
         return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet
 
@@ -132,11 +130,15 @@ async def get_cloudflare_ips():
             response.raise_for_status()
             text = response.text
             cloudflare_ips = set()
-            cidr_blocks = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})', text)
-            for cidr in cidr_blocks:
-                ip_network = ipaddress.ip_network(cidr)
-                for ip in ip_network:
-                    cloudflare_ips.add(str(ip))
+            for line in text.splitlines():
+                line = line.strip()
+                if '/' in line:
+                    try:
+                        ip_network = ipaddress.ip_network(line)
+                        for ip in ip_network:
+                            cloudflare_ips.add(str(ip))
+                    except ValueError:
+                        continue
             return cloudflare_ips
     except Exception as e:
         print("Ошибка при получении IP адресов Cloudflare:", e)
@@ -149,15 +151,17 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
             total_domains_processed[0] += 1
             response = await resolver.resolve(domain)
             ips = [ip.address for ip in response]
+            filtered_ips = []
             for ip_address in ips:
                 if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in resolver.nameservers:
                     null_ips_count[0] += 1
                 elif ip_address in cloudflare_ips:
                     cloudflare_ips_count[0] += 1
                 else:
+                    filtered_ips.append(ip_address)
                     print(f"{Fore.BLUE}{domain} IP-адрес: {ip_address} - {dns_server_name}{Style.RESET_ALL}")
-            return ips
-        except Exception as e:
+            return filtered_ips
+        except Exception as e:  # Ловим все ошибки чтобы код не прервался
             print(f"{Fore.RED}Не удалось получить IP-адрес: {domain} - {dns_server_name}{Style.RESET_ALL}")
             return []
 
@@ -191,7 +195,6 @@ async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ip
 
 
 def check_service_config(service, urls, local_dns_names):
-    services = []
     if service:
         services = [s.strip() for s in service.split(',')]
         if "custom" in services:
@@ -239,7 +242,7 @@ def check_include_cloudflare(cloudflare):
     elif cloudflare.lower() == 'no':
         return False
     else:
-        return input(f"\nИсключить IP адреса Cloudflare из итогового списка? ({green('yes')} "
+        return input(f"\n{yellow('Исключить IP адреса Cloudflare из итогового списка?')} ({green('yes')} "
                      f"- исключить, {green('Enter')} - оставить): ").strip().lower() == "yes"
 
 
@@ -302,39 +305,71 @@ def mk_comment(selected_service):
 
 # Выбор формата сохранения списка разрешенных DNS имен
 def subnetting(subnet):
-    if subnet.lower() == 'yes':
+    # Если значение пустое, запрашиваем ввод от пользователя
+    if subnet.lower() == '':
+        subnet = input(f"\n{yellow('Объединить IP-адреса в подсети?')} "
+                       f"\n{green('16')} - сократить до /16 (255.255.0.0)"
+                       f"\n{green('24')} - сократить до /24 (255.255.255.0)"
+                       f"\n{green('Enter')} - пропустить: ").strip().lower()
+
+    # Обрабатываем ввод или параметр
+    if subnet == '16':
+        return "16", "255.255.0.0"
+    elif subnet == '24':
         return "24", "255.255.255.0"
-    elif subnet.lower() == 'no':
-        return "32", "255.255.255.255"
     else:
-        choice = input(f"\n{yellow('Сгруппировать IP-адреса в подсети?')} ({green('yes')} - да, {green('Enter')} - нет): ").strip().lower()
-        if choice == "yes":
-            return "24", "255.255.255.0"
-        else:
-            return "32", "255.255.255.255"
+        return "32", "255.255.255.255"
 
 
-def group_ips_in_subnets(filename):
+def group_ips_in_subnets(filename, submask):
     try:
+        # Чтение всех IP-адресов из файла
         with open(filename, 'r', encoding='utf-8-sig') as file:
             ips = {line.strip() for line in file if line.strip()}  # Собираем уникальные IP адреса
 
-        # Преобразование всех IP в их подсети /24
-        subnet_ips = set()
-        for ip in ips:
-            try:
-                # Преобразуем IP в сеть /24 (маска 255.255.255.0)
-                network = ipaddress.ip_network(f"{ip}/24", strict=False)
-                subnet_ips.add(str(network.network_address))
-            except ValueError as e:
-                print(f"{red('Ошибка в IP адресе:')} {ip} - {e}")
+        # Обработка подсетей в зависимости от маски
+        if submask == "24":
+            # Множество для хранения всех подсетей /24
+            subnets = set()
 
-        # Перезаписываем файл с уникальными подсетями
-        with open(filename, 'w', encoding='utf-8-sig') as file:
-            for subnet in subnet_ips:
-                file.write(subnet + '\n')
+            # Преобразование всех IP в их подсети /24
+            for ip in ips:
+                try:
+                    # Преобразуем IP в сеть /24 (маска 255.255.255.0)
+                    network_24 = ipaddress.ip_network(f"{ip}/24", strict=False)
+                    subnets.add(str(network_24.network_address))
+                except ValueError as e:
+                    print(f"{red('Ошибка в IP адресе:')} {ip} - {e}")
 
-        print("IP-адреса сгруппированы...")
+            # Перезаписываем файл с уникальными подсетями /24
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for subnet in sorted(subnets):
+                    file.write(subnet + '\n')
+
+            print(f"{Style.BRIGHT}IP-адреса агрегированы до /{submask} подсети{Style.RESET_ALL}")
+
+        elif submask == "16":
+            # Множество для хранения всех объединенных подсетей /16
+            subnets = set()
+
+            # Преобразование всех IP в их подсети /16
+            for ip in ips:
+                try:
+                    # Преобразуем IP в сеть /16 (маска 255.255.0.0)
+                    network_16 = ipaddress.ip_network(f"{ip}/16", strict=False)
+                    subnets.add(str(network_16.network_address))
+                except ValueError as e:
+                    print(f"{red('Ошибка в IP адресе:')} {ip} - {e}")
+
+            # Перезаписываем файл с уникальными подсетями /16
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for subnet in sorted(subnets):
+                    file.write(subnet + '\n')
+
+            print(f"{Style.BRIGHT}IP-адреса агрегированы до /{submask} подсети{Style.RESET_ALL}")
+
+        else:
+            print(f"{red('Неправильная маска подсети:')} {submask}")
 
     except Exception as e:
         print(f"{red('Ошибка при обработке файла:')} {e}")
@@ -355,17 +390,17 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             for ip in ips:
                 file.write(formatter(ip.strip()) + '\n')
 
-    # Определение маски подсети для отображения пользователю
-    display_submask = "255.255.255.0" if submask == "24" else "255.255.255.255"
+    # Определение маски подсети для отображения пользователю и ее корректной записи в файл
+    display_submask = "255.255.0.0" if submask == "16" else "255.255.255.0" if submask == "24" else "255.255.255.255"
 
     if not filetype:
         filetype = input(f"""
 {yellow('В каком формате сохранить файл?')}
-{green('win')} - route add {cyan('IP')} mask {cyan(display_submask)} {cyan('GATEWAY')}
-{green('unix')} - ip route {cyan('IP')}/{cyan(submask)} {cyan('GATEWAY')}
-{green('cidr')} - {cyan('IP')}/{cyan(submask)}
-{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{cyan(submask)}
-{green('ovpn')} - push "route {cyan('IP')} {cyan(display_submask)}"
+{green('win')} - route add {cyan('IP')} mask {display_submask} {cyan('GATEWAY')}
+{green('unix')} - ip route {cyan('IP')}/{submask} {cyan('GATEWAY')}
+{green('cidr')} - {cyan('IP')}/{submask}
+{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{submask}
+{green('ovpn')} - push "route {cyan('IP')} {display_submask}"
 {green('Enter')} - {cyan('IP')}
 Ваш выбор: """)
 
@@ -383,16 +418,14 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
     formatters = {
         'win': lambda ip: f"route add {ip} mask {display_submask} {gateway}",
-        'unix': lambda ip: f"ip route {ip}{submask} {gateway}",
-        'cidr': lambda ip: f"{ip}{submask}",
+        'unix': lambda ip: f"ip route {ip}/{submask} {gateway}",
+        'cidr': lambda ip: f"{ip}/{submask}",
         'ovpn': lambda ip: f'push "route {ip} {display_submask}"',
-        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} '
-                               f'comment="{mk_comment(selected_service)}" address={ip}/{submask}'
+        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip}/{submask}'
     }
 
     if filetype.lower() in formatters:
         write_file(filename, ips, formatters[filetype.lower()])
-
 
 
 # Ну чо, погнали?!
@@ -463,8 +496,7 @@ async def main():
 
     # Группировка IP-адресов в подсети
     submask, _ = subnetting(subnet)
-    if submask == "24":
-        group_ips_in_subnets(filename)
+    group_ips_in_subnets(filename, submask)
 
     process_file_format(filename, filetype, gateway, selected_services, mk_list_name, submask)
 
