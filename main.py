@@ -13,6 +13,7 @@ from colorama import init
 
 # Цвета
 init(autoreset=True)
+
 def yellow(text):
     return f"{Fore.YELLOW}{text}{Style.RESET_ALL}"
 
@@ -31,7 +32,6 @@ def magneta(text):
 def blue(text):
     return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
 
-
 # Читаем конфигурацию
 def read_config(filename):
     try:
@@ -49,6 +49,7 @@ def read_config(filename):
         run_command = config.get('run') or ''
         dns_server_indices = list(map(int, config.get('dnsserver', '').split())) if config.get('dnsserver') else []
         mk_list_name = config.get('listname') or ''
+        subnet = config.get('subnet') or ''
 
         print(f"{yellow('Загружена конфигурация из config.ini:')}")
         print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
@@ -59,19 +60,19 @@ def read_config(filename):
         print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Группировка IP-адресов в подсети:{Style.RESET_ALL} {'включена' if subnet == 'yes' else 'выключена' if subnet == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
-        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name
+        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet
 
     except Exception as e:
         print(f"{yellow('Ошибка загрузки config.ini:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
-        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], ''
+        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', ''
 
 
 def gateway_input(gateway):
     if not gateway:
         input_gateway = input(f"Укажите {green('шлюз')} или {green('имя интерфейса')}: ")
-        if input_gateway:
-            return input_gateway.strip()
+        return input_gateway.strip() if input_gateway else None
     else:
         return gateway
 
@@ -285,102 +286,119 @@ def check_dns_servers(dns_servers, dns_server_indices):
     return selected_dns_servers
 
 
-
-
-
 # Для microtik ввод комментария comment для firewall
 def mk_list_name_input(mk_list_name):
     if not mk_list_name:
-        input_mk_list_name = input(f"Введите {green('LIST_NAME')} для firewall: ")
-        if input_mk_list_name:
-            return input_mk_list_name.strip()
+        input_mk_list_name = input(f"Введите {green('LIST_NAME')} для Mikrotik firewall: ")
+        return input_mk_list_name.strip() if input_mk_list_name else None
     else:
         return mk_list_name
 
 
-# Для mikrotik собираем в кучку сервисы
+# Для mikrotik уплотняем имена сервисов
 def mk_comment(selected_service):
     return ",".join(["".join(word.title() for word in s.split()) for s in selected_service])
 
 
 # Выбор формата сохранения списка разрешенных DNS имен
-def process_file_format(filename, filetype, gateway, selected_service, mk_list_name):
+def subnetting(subnet):
+    if subnet.lower() == 'yes':
+        return "24", "255.255.255.0"
+    elif subnet.lower() == 'no':
+        return "32", "255.255.255.255"
+    else:
+        choice = input(f"\n{yellow('Сгруппировать IP-адреса в подсети?')} ({green('yes')} - да, {green('Enter')} - нет): ").strip().lower()
+        if choice == "yes":
+            return "24", "255.255.255.0"
+        else:
+            return "32", "255.255.255.255"
+
+
+def group_ips_in_subnets(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8-sig') as file:
+            ips = {line.strip() for line in file if line.strip()}  # Собираем уникальные IP адреса
+
+        # Преобразование всех IP в их подсети /24
+        subnet_ips = set()
+        for ip in ips:
+            try:
+                # Преобразуем IP в сеть /24 (маска 255.255.255.0)
+                network = ipaddress.ip_network(f"{ip}/24", strict=False)
+                subnet_ips.add(str(network.network_address))
+            except ValueError as e:
+                print(f"{red('Ошибка в IP адресе:')} {ip} - {e}")
+
+        # Перезаписываем файл с уникальными подсетями
+        with open(filename, 'w', encoding='utf-8-sig') as file:
+            for subnet in subnet_ips:
+                file.write(subnet + '\n')
+
+        print("IP-адреса сгруппированы...")
+
+    except Exception as e:
+        print(f"{red('Ошибка при обработке файла:')} {e}")
+
+
+# Выбор формата сохранения списка разрешенных DNS имен
+def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, submask):
+    def read_file(filename):
+        try:
+            with open(filename, 'r', encoding='utf-8-sig') as file:
+                return file.readlines()
+        except Exception as e:
+            print(f"Ошибка чтения файла: {e}")
+            return None
+
+    def write_file(filename, ips, formatter):
+        with open(filename, 'w', encoding='utf-8-sig') as file:
+            for ip in ips:
+                file.write(formatter(ip.strip()) + '\n')
+
+    # Определение маски подсети для отображения пользователю
+    display_submask = "255.255.255.0" if submask == "24" else "255.255.255.255"
+
     if not filetype:
         filetype = input(f"""
 {yellow('В каком формате сохранить файл?')}
-{green('win')} - route add {cyan('IP')} mask 255.255.255.255 {cyan('GATEWAY')}
-{green('unix')} - ip route {cyan('IP')}/32 {cyan('GATEWAY')}
-{green('cidr')} - {cyan('IP')}/32
-{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/32
-{green('ovpn')} - push "route {cyan('IP')} 255.255.255.255"
+{green('win')} - route add {cyan('IP')} mask {cyan(display_submask)} {cyan('GATEWAY')}
+{green('unix')} - ip route {cyan('IP')}/{cyan(submask)} {cyan('GATEWAY')}
+{green('cidr')} - {cyan('IP')}/{cyan(submask)}
+{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{cyan(submask)}
+{green('ovpn')} - push "route {cyan('IP')} {cyan(display_submask)}"
 {green('Enter')} - {cyan('IP')}
 Ваш выбор: """)
 
+    ips = read_file(filename)
+    if not ips:
+        return
+
+    # Если формат требует указания шлюза, запрашиваем его
     if filetype.lower() in ['win', 'unix']:
-        gateway = gateway_input(gateway)
+        gateway = gateway_input(gateway)  # Сохраняем значение шлюза после ввода
 
-        try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-        except Exception as e:
-            print(f"Ошибка чтения файла: {e}")
-            return
+    # Если выбран формат Mikrotik, запрашиваем mk_list_name
+    if filetype.lower() == 'mikrotik':
+        mk_list_name = mk_list_name_input(mk_list_name)  # Сохраняем значение mk_list_name после ввода
 
-        if ips:
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    if filetype.lower() == 'win':
-                        file.write(f"route add {ip.strip()} mask 255.255.255.255 {gateway}\n")
-                    elif filetype.lower() == 'unix':
-                        file.write(f"ip route {ip.strip()}/32 {gateway}\n")
-    elif filetype.lower() == 'cidr':
-        try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-        except Exception as e:
-            print(f"Ошибка чтения файла: {e}")
-            return
+    formatters = {
+        'win': lambda ip: f"route add {ip} mask {display_submask} {gateway}",
+        'unix': lambda ip: f"ip route {ip}{submask} {gateway}",
+        'cidr': lambda ip: f"{ip}{submask}",
+        'ovpn': lambda ip: f'push "route {ip} {display_submask}"',
+        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} '
+                               f'comment="{mk_comment(selected_service)}" address={ip}/{submask}'
+    }
 
-        if ips:
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f"{ip.strip()}/32\n")
+    if filetype.lower() in formatters:
+        write_file(filename, ips, formatters[filetype.lower()])
 
-    elif filetype.lower() == 'ovpn':
-        try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-        except Exception as e:
-            print(f"Ошибка чтения файла: {e}")
-            return
-        if ips:
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f'push "route {ip.strip()} 255.255.255.255"\n')
-
-    elif filetype.lower() == 'mikrotik':
-        mk_list_name = mk_list_name_input(mk_list_name)
-
-        try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
-                ips = file.readlines()
-        except Exception as e:
-            print(f"Ошибка чтения файла: {e}")
-            return
-
-        if ips:
-            with open(filename, 'w', encoding='utf-8-sig') as file:
-                for ip in ips:
-                    file.write(f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip.strip()}/32{chr(10)}')
-
-    else:
-        pass
 
 
 # Ну чо, погнали?!
 async def main():
     # Инициализация настроек из config.ini
-    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name = read_config('config.ini')
+    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet = read_config('config.ini')
 
     # Load URLs
     platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
@@ -443,7 +461,12 @@ async def main():
     print(f"{Style.BRIGHT}Исключено IP-адресов 'заглушек':{Style.RESET_ALL} {null_ips_count[0]}")
     print(f"{Style.BRIGHT}Разрешено IP-адресов из DNS имен:{Style.RESET_ALL} {len(unique_ips_all_services)}")
 
-    process_file_format(filename, filetype, gateway, selected_services, mk_list_name)
+    # Группировка IP-адресов в подсети
+    submask, _ = subnetting(subnet)
+    if submask == "24":
+        group_ips_in_subnets(filename)
+
+    process_file_format(filename, filetype, gateway, selected_services, mk_list_name, submask)
 
     if run_command:
         print("\nВыполнение команды после завершения скрипта...")
@@ -452,6 +475,7 @@ async def main():
         print(f"\n{Style.BRIGHT}Результаты сохранены в файл:{Style.RESET_ALL}", filename)
         if os.name == 'nt':
             input(f"Нажмите {green('Enter')} для выхода...")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
