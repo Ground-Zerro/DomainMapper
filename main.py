@@ -145,7 +145,7 @@ async def get_cloudflare_ips():
         return set()
 
 
-async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed):
+async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed, include_cloudflare):
     async with semaphore:
         try:
             total_domains_processed[0] += 1
@@ -155,7 +155,7 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
             for ip_address in ips:
                 if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in resolver.nameservers:
                     null_ips_count[0] += 1
-                elif ip_address in cloudflare_ips:
+                elif include_cloudflare and ip_address in cloudflare_ips:
                     cloudflare_ips_count[0] += 1
                 else:
                     filtered_ips.append(ip_address)
@@ -165,8 +165,7 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
             print(f"{Fore.RED}Не удалось получить IP-адрес: {domain} - {dns_server_name}{Style.RESET_ALL}")
             return []
 
-
-async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ips_all_services, semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed):
+async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ips_all_services, semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed, include_cloudflare):
     try:
         print(f"{Fore.YELLOW}Анализ DNS имен платформы {service}...{Style.RESET_ALL}")
 
@@ -177,7 +176,7 @@ async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ip
             for domain in dns_names:
                 domain = domain.strip()
                 if domain:
-                    tasks.append(resolve_domain(domain, resolver, semaphore[server_name], server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed))
+                    tasks.append(resolve_domain(domain, resolver, semaphore[server_name], server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed, include_cloudflare))
 
         results = await asyncio.gather(*tasks)
 
@@ -427,6 +426,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
 
 # Ну чо, погнали?!
+# Ну чо, погнали?!
 async def main():
     # Инициализация настроек из config.ini
     service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet = read_config('config.ini')
@@ -467,7 +467,7 @@ async def main():
     for service in selected_services:
         if service == 'Custom DNS list':
             tasks.append(resolve_dns(service, local_dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
-                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed))
+                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed, include_cloudflare))
         else:
             dns_names_url = urls[service]
             async with httpx.AsyncClient() as client:
@@ -475,7 +475,7 @@ async def main():
                 response.raise_for_status()
                 dns_names = response.text.splitlines()
             tasks.append(resolve_dns(service, dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
-                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed))
+                                     semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed, include_cloudflare))
 
     results = await asyncio.gather(*tasks)
 
@@ -505,7 +505,6 @@ async def main():
         print(f"\n{Style.BRIGHT}Результаты сохранены в файл:{Style.RESET_ALL}", filename)
         if os.name == 'nt':
             input(f"Нажмите {green('Enter')} для выхода...")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
