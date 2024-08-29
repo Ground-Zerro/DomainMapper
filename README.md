@@ -54,6 +54,7 @@ pip3 install -r requirements.txt
 - Загляните в директорию "Windows" репозитория.
 
 **New**
+- Wireguard формат сохранения. Запрос от @sanikroot
 - Агрегация маршрутов. Запрос от @sergeeximius 
 - ovpn формат сохранения. Запрос от @SonyLo
 

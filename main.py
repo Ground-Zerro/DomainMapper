@@ -56,7 +56,7 @@ def read_config(filename):
         print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети' if subnet == '16' else 'до /24 подсети' if subnet == '24' else 'вЫключена' if subnet == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
-        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
@@ -372,7 +372,6 @@ def group_ips_in_subnets(filename, submask):
         print(f"{red('Ошибка при обработке файла:')} {e}")
 
 
-# Выбор формата сохранения списка разрешенных DNS имен
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, submask):
     def read_file(filename):
         try:
@@ -383,9 +382,14 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             return None
 
     def write_file(filename, ips, formatter):
-        with open(filename, 'w', encoding='utf-8-sig') as file:
-            for ip in ips:
-                file.write(formatter(ip.strip()) + '\n')
+        if filetype.lower() == 'wireguard':
+            formatted_ips = [formatter(ip.strip()) for ip in ips]
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                file.write(', '.join(formatted_ips))  # Join with ", " to include a space after each comma
+        else:
+            with open(filename, 'w', encoding='utf-8-sig') as file:
+                for ip in ips:
+                    file.write(formatter(ip.strip()) + '\n')
 
     # Определение маски подсети для отображения пользователю и ее корректной записи в файл
     display_submask = "255.255.0.0" if submask == "16" else "255.255.255.0" if submask == "24" else "255.255.255.255"
@@ -398,6 +402,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 {green('cidr')} - {cyan('IP')}/{submask}
 {green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{submask}
 {green('ovpn')} - push "route {cyan('IP')} {display_submask}"
+{green('wireguard')} - {cyan('IP')}/{submask}, и т.д...
 {green('Enter')} - {cyan('IP')}
 Ваш выбор: """)
 
@@ -418,14 +423,14 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         'unix': lambda ip: f"ip route {ip}/{submask} {gateway}",
         'cidr': lambda ip: f"{ip}/{submask}",
         'ovpn': lambda ip: f'push "route {ip} {display_submask}"',
-        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip}/{submask}'
+        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip}/{submask}',
+        'wireguard': lambda ip: f"{ip}/{submask}"
     }
 
     if filetype.lower() in formatters:
         write_file(filename, ips, formatters[filetype.lower()])
 
 
-# Ну чо, погнали?!
 # Ну чо, погнали?!
 async def main():
     # Инициализация настроек из config.ini
