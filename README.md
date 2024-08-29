@@ -55,7 +55,7 @@ pip3 install -r requirements.txt
 
 **New**
 - Wireguard формат сохранения. Запрос от @sanikroot
-- Агрегация маршрутов. Запрос от @sergeeximius 
+- Агрегация маршрутов до /24, /16. Запрос от @sergeeximius
 - ovpn формат сохранения. Запрос от @SonyLo
 
 
