@@ -1,8 +1,6 @@
-﻿flxvpn.net
-netflix.ca
+﻿netflix.ca
 netflix.com
 netflix.com.au
-netflix.net
 netflixdnstest1.com
 netflixdnstest10.com
 netflixdnstest2.com
@@ -16,8 +14,3 @@ netflixdnstest9.com
 netflixinvestor.com
 netflixstudios.com
 netflixtechblog.com
-nflxext.com
-nflximg.com
-nflximg.net
-nflxso.net
-nflxvideo.net
