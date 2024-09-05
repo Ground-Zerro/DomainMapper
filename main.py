@@ -398,7 +398,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         filetype = input(f"""
 {yellow('В каком формате сохранить файл?')}
 {green('win')} - route add {cyan('IP')} mask {display_submask} {cyan('GATEWAY')}
-{green('keenetic')} - ip route {cyan('IP')} {display_submask} {cyan('GATEWAY')} Wireguard0 auto
+{green('keenetic')} - ip route {cyan('IP')} {display_submask} {cyan('GATEWAY')} Wireguard0 auto !{mk_comment(selected_service)}
 {green('unix')} - ip route {cyan('IP')}/{submask} {cyan('GATEWAY')}
 {green('cidr')} - {cyan('IP')}/{submask}
 {green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{submask}
@@ -419,13 +419,9 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
     if filetype.lower() == 'mikrotik':
         mk_list_name = mk_list_name_input(mk_list_name)  # Сохраняем значение mk_list_name после ввода
 
-    description = ''
-    if filetype.lower() in ['keenetic']:
-        description = input(f"Введите {green('DESCRIPTION')} для роутов: ")
-
     formatters = {
         'win': lambda ip: f"route add {ip} mask {display_submask} {gateway}",
-        'keenetic': lambda ip: f"ip route {ip} {display_submask} {gateway} Wireguard0 auto !{description}",
+        'keenetic': lambda ip: f"ip route {ip} {display_submask} {gateway} Wireguard0 auto !{mk_comment(selected_service)}",
         'unix': lambda ip: f"ip route {ip}/{submask} {gateway}",
         'cidr': lambda ip: f"{ip}/{submask}",
         'ovpn': lambda ip: f'push "route {ip} {display_submask}"',
