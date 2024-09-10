@@ -18,6 +18,7 @@
 - Google
 - Torrent Truckers
 - Search engines
+- [Github сopilot](https://github.com/features/copilot)
 - Личный список
 
 
@@ -54,6 +55,7 @@ pip3 install -r requirements.txt
 - Загляните в директорию "Windows" репозитория.
 
 **New**
+- Добавлен сервис Github сopilot. Запрос от @aspirisen
 - keenetic CLI формат сохранения. Запрос от @vchikalkin
 - Wireguard формат сохранения. Запрос от @sanikroot
 - Агрегация маршрутов до /24, /16. Запрос от @sergeeximius
