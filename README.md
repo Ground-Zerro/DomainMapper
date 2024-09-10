@@ -70,4 +70,4 @@ pip3 install -r requirements.txt
 - ovpn формат сохранения. Запрос от @SonyLo
 
 
-##### Протестировано в Ubuntu 20.04 и Windows 10/11
+##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
