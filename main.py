@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import configparser
 import ipaddress
@@ -31,10 +32,10 @@ def blue(text):
     return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
 
 # Читаем конфигурацию
-def read_config(filename):
+def read_config(cfg_file):
     try:
         config = configparser.ConfigParser()
-        with open(filename, 'r', encoding='utf-8-sig') as file:
+        with open(cfg_file, 'r', encoding='utf-8-sig') as file:
             config.read_file(file)
         if 'DomainMapper' in config:
             config = config['DomainMapper']
@@ -48,22 +49,25 @@ def read_config(filename):
         dns_server_indices = list(map(int, config.get('dnsserver', '').split())) if config.get('dnsserver') else []
         mk_list_name = config.get('listname') or ''
         subnet = config.get('subnet') or ''
+        cfginfo = config.get('cfginfo') or 'yes'
 
-        print(f"{yellow('Загружена конфигурация из config.ini:')}")
-        print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
-        print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети' if subnet == '16' else 'до /24 подсети' if subnet == '24' else 'вЫключена' if subnet == 'no' else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
-        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Keenetic CLI' if filetype == 'keenetic' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
-        print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
+        if cfginfo == 'yes':
+            print(f"{yellow(f'Загружена конфигурация из {cfg_file}:')}")
+            print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
+            print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включена' if cloudflare == 'yes' else 'вЫключена' if cloudflare == 'no' else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети' if subnet == '16' else 'до /24 подсети' if subnet == '24' else 'вЫключена' if subnet == 'no' else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
+            print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Keenetic CLI' if filetype == 'keenetic' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
+            print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
+
         return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet
 
     except Exception as e:
-        print(f"{yellow('Ошибка загрузки config.ini:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
+        print(f"{yellow(f'Ошибка загрузки {cfg_file}:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
         return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', ''
 
 
@@ -435,8 +439,19 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
 # Ну чо, погнали?!
 async def main():
-    # Инициализация настроек из config.ini
-    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet = read_config('config.ini')
+    # Парсинг аргументов командной строки
+    parser = argparse.ArgumentParser(description="DNS resolver script with custom config file.")
+    parser.add_argument(
+        '-c', '--config',
+        type=str,
+        default='config.ini',
+        help='Путь к конфигурационному файлу (по умолчанию: config.ini)'
+    )
+    args = parser.parse_args()
+
+    # Инициализация настроек из переданного конфигурационного файла
+    config_file = args.config
+    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet = read_config(config_file)
 
     # Load URLs
     platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
