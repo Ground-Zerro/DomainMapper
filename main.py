@@ -56,7 +56,7 @@ def read_config(filename):
         print(f"{Style.BRIGHT}Фильтр IP-адресов Cloudflare:{Style.RESET_ALL} {'включен' if cloudflare == 'yes' else 'выключен' if cloudflare == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети' if subnet == '16' else 'до /24 подсети' if subnet == '24' else 'вЫключена' if subnet == 'no' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Сохранить результаты в файл:{Style.RESET_ALL} {filename}")
-        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
+        print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'CLI Mikrotik firewall' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Keenetic CLI' if filetype == 'keenetic' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для маршрутов:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
         print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
@@ -401,6 +401,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 {green('unix')} - ip route {cyan('IP')}/{submask} {cyan('GATEWAY')}
 {green('cidr')} - {cyan('IP')}/{submask}
 {green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{submask}
+{green('keenetic')} - ip route {cyan('IP')}/{submask} {cyan('GATEWAY')} auto !{mk_comment(selected_service)}
 {green('ovpn')} - push "route {cyan('IP')} {display_submask}"
 {green('wireguard')} - {cyan('IP')}/{submask}, и т.д...
 {green('Enter')} - {cyan('IP')}
@@ -411,7 +412,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         return
 
     # Если формат требует указания шлюза, запрашиваем его
-    if filetype.lower() in ['win', 'unix']:
+    if filetype.lower() in ['win', 'unix', 'keenetic']:
         gateway = gateway_input(gateway)  # Сохраняем значение шлюза после ввода
 
     # Если выбран формат Mikrotik, запрашиваем mk_list_name
@@ -424,6 +425,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         'cidr': lambda ip: f"{ip}/{submask}",
         'ovpn': lambda ip: f'push "route {ip} {display_submask}"',
         'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip}/{submask}',
+        'keenetic': lambda ip: f"ip route {ip}/{submask} {gateway} auto !{mk_comment(selected_service)}",
         'wireguard': lambda ip: f"{ip}/{submask}"
     }
 

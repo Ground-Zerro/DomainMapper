@@ -54,6 +54,7 @@ pip3 install -r requirements.txt
 - Загляните в директорию "Windows" репозитория.
 
 **New**
+- keenetic CLI формат сохранения. Запрос от @vchikalkin
 - Wireguard формат сохранения. Запрос от @sanikroot
 - Агрегация маршрутов до /24, /16. Запрос от @sergeeximius
 - ovpn формат сохранения. Запрос от @SonyLo
