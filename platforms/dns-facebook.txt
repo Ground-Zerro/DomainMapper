@@ -30,3 +30,8 @@ web.facebook.com
 whatsapp.com
 whatsapp.net
 www.facebook.com
+scontent-ist1-2.xx.fbcdn.net
+static.xx.fbcdn.net
+fbsbx.com
+scontent.xx.fbcdn.net
+gateway.facebook.com
