@@ -1,12 +1,8 @@
 ﻿googlevideo.com
-ggpht.com
-ytimg.com
-l.google.com
 youtube.com
 play.google.com
 youtubei.googleapis.com
 youtu.be
-nhacmp3youtube.com
 googleusercontent.com
 gstatic.com
 r4.sn-jvhnu5g-n8vy.googlevideo.com
@@ -31,6 +27,7 @@ rr1---sn-gvnuxaxjvh-bqme.googlevideo.com
 rr1---sn-p5qlsn7l.googlevideo.com
 rr1---sn-p5qs7n6d.googlevideo.com
 rr1---sn-vgqsknzk.googlevideo.com
+rr1---sn-4pa5ojvg0-n8ve.googlevideo.com
 rr2.sn-ntq7yner.googlevideo.com
 rr2.sn-4ox-ixal.googlevideo.com
 rr2.sn-p5qddn76.googlevideo.com
@@ -51,6 +48,7 @@ rr2---sn-p5qddn76.googlevideo.com
 rr2---sn-p5qs7nzk.googlevideo.com
 rr2---sn-vgqsknez.googlevideo.com
 rr2---sn-vgqsrnzk.googlevideo.com
+rr2---sn-q4fl6nsk.googlevideo.com
 rr3.sn-4g5ednsl.googlevideo.com
 rr3.sn-ixh7yn7d.googlevideo.com
 rr3.sn-p5qs7n6d.googlevideo.com
@@ -62,6 +60,8 @@ rr3---sn-4g5lznlz.googlevideo.com
 rr3---sn-ixh7yn7d.googlevideo.com
 rr3---sn-p5qs7n6d.googlevideo.com
 rr3---sn-q4flrn7y.googlevideo.com
+rr3---sn-q4flrn7r.googlevideo.com
+rr3---sn-4pa5ojvg0-n8ve.googlevideo.com
 rr4.sn-4g5edndy.googlevideo.com
 rr4.sn-q4flrnle.googlevideo.com
 rr4.sn-jvhnu5g-n8vy.googlevideo.com
@@ -100,3 +100,4 @@ rr6.sn-jvhnu5g-c35d.googlevideo.com
 rr6.sn-jvhnu5g-n8vy.googlevideo.com
 rr6---sn-jvhnu5g-c35d.googlevideo.com
 rr6---sn-jvhnu5g-n8vy.googlevideo.com
+rr6---sn-ug5onuxaxjvh-n8vs.googlevideo.com
