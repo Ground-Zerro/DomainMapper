@@ -64,6 +64,7 @@ pip3 install -r requirements.txt
 <details>
   <summary>Что нового</summary>
 
+- Добавлен сервис Twitch. Запрос от @shevernitskiy
 - Добавлен Yandex DNS сервер. Запрос от @Noksa
 - Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
 - Кастомное имя конфигурационного файла. Запрос от @Noksa
