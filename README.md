@@ -19,6 +19,7 @@
 - Torrent Truckers
 - Search engines
 - [Github сopilot](https://github.com/features/copilot)
+- Twitch
 - Личный список
 
 
