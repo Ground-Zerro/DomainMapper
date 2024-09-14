@@ -59,15 +59,21 @@ pip3 install -r requirements.txt
 **Кто не знает "как", но кому "очень нужно":**
 - Загляните в директорию "Windows" репозитория.
 
-**New**
+
+<details>
+  <summary>Что нового</summary>
+
 - Добавлен Yandex DNS сервер. Запрос от @Noksa
 - Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
 - Кастомное имя конфигурационного файла. Запрос от @Noksa
-- Добавлен сервис Github сopilot. Запрос от @aspirisen
+- Добавлен сервис Github Copilot. Запрос от @aspirisen
 - Keenetic CLI формат сохранения. Запрос от @vchikalkin
 - Wireguard формат сохранения. Запрос от @sanikroot
 - Агрегация маршрутов до /24, /16. Запрос от @sergeeximius
-- ovpn формат сохранения. Запрос от @SonyLo
+- OVPN формат сохранения. Запрос от @SonyLo
+
+</details>
+
 
 
 ##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
