@@ -1,6 +1,7 @@
 import asyncio
-import dns.resolver
 from concurrent.futures import ThreadPoolExecutor
+
+import dns.resolver
 
 # DNS сервера для проверки
 dns_servers = {
