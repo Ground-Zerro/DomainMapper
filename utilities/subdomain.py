@@ -1,8 +1,9 @@
+import random
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import requests
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
-import random
 
 
 def parse_page(url):
