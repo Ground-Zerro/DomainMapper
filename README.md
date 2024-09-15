@@ -64,6 +64,7 @@ pip3 install -r requirements.txt
 <details>
   <summary>Что нового</summary>
 
+- Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
 - Добавлен сервис Twitch. Запрос от @shevernitskiy
 - Добавлен Yandex DNS сервер. Запрос от @Noksa
 - Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
