@@ -65,15 +65,16 @@ pip3 install -r requirements.txt
   <summary>Что нового</summary>
 
 - Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
-- Добавлен сервис Twitch. Запрос от @shevernitskiy
-- Добавлен Yandex DNS сервер. Запрос от @Noksa
+- Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
+- Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
 - Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
-- Кастомное имя конфигурационного файла. Запрос от @Noksa
-- Добавлен сервис Github Copilot. Запрос от @aspirisen
-- Keenetic CLI формат сохранения. Запрос от @vchikalkin
-- Wireguard формат сохранения. Запрос от @sanikroot
-- Агрегация маршрутов до /24, /16. Запрос от @sergeeximius
-- OVPN формат сохранения. Запрос от @SonyLo
+- Кастомное имя конфигурационного файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/25)
+- Добавлен сервис Github Copilot. [Запрос @aspirisen](https://github.com/Ground-Zerro/DomainMapper/issues/23)
+- Keenetic CLI формат сохранения. [Запрос @vchikalkin](https://github.com/Ground-Zerro/DomainMapper/pull/20)
+- Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
+- Агрегация маршрутов до /24, /16. [Запрос @sergeeximius](https://github.com/Ground-Zerro/DomainMapper/issues/8)
+- OVPN формат сохранения. [Запрос @SonyLo](https://github.com/Ground-Zerro/DomainMapper/pull/13)
+- Wireguard формат сохранения.[Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
 
 </details>
 
