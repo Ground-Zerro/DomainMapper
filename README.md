@@ -74,7 +74,7 @@ pip3 install -r requirements.txt
 - Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
 - Агрегация маршрутов до /24, /16. [Запрос @sergeeximius](https://github.com/Ground-Zerro/DomainMapper/issues/8)
 - OVPN формат сохранения. [Запрос @SonyLo](https://github.com/Ground-Zerro/DomainMapper/pull/13)
-- Wireguard формат сохранения.[Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
+- Mikrotik формат сохранения.[Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
 
 </details>
 
