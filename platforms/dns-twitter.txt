@@ -1,4 +1,13 @@
-﻿api.twitter.com
+﻿t.co
+tweetdeck.com
+twimg.com
+cdn.syndication.twimg.com
+pbs.twimg.com
+pbs.twimg.com.akamaized.net
+pbs-ak.twimg.com
+video.twimg.com
+twitter.com
+api.twitter.com
 api-0-4-0.twitter.com
 api-0-4-2.twitter.com
 api-0-4-3.twitter.com
