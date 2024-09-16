@@ -51,8 +51,10 @@ def read_config(cfg_file):
         subnet = config.get('subnet') or ''
         cfginfo = config.get('cfginfo') or 'yes'
         ken_gateway = config.get('keenetic') or ''
+        localplatform = config.get('localplatform') or ''
+        localdns = config.get('localdns') or ''
 
-        if cfginfo == 'yes':
+        if cfginfo in ['yes', 'y']:
             print(f"{yellow(f'Загружена конфигурация из {cfg_file}:')}")
             print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
@@ -68,12 +70,16 @@ def read_config(cfg_file):
                 print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Сохранить результат в файл:{Style.RESET_ALL} {filename}")
             print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
+        if localplatform in ['yes', 'y'] or localdns in ['yes', 'y']:
+            print(f"\n{red('!!! Включен локальный режим !!!')}")
+            print(f"{Style.BRIGHT}Список сервисов будет загружен из:{Style.RESET_ALL} {'файла platformdb' if localplatform in ['yes', 'y'] else 'сети'}")
+            print(f"{Style.BRIGHT}Список DNS серверов будет загружен из:{Style.RESET_ALL} {'файла dnsdb' if localdns in ['yes', 'y'] else 'сети'}")
 
-        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway
+        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, localdns
 
     except Exception as e:
         print(f"{yellow(f'Ошибка загрузки {cfg_file}:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
-        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', ''
+        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', '', '', ''
 
 
 def gateway_input(gateway):
@@ -102,6 +108,7 @@ def init_semaphores(request_limit):
     return get_semaphore(request_limit)
 
 
+# Загрузка списка платформ из сети
 async def load_urls(url):
     try:
         async with httpx.AsyncClient() as client:
@@ -111,6 +118,21 @@ async def load_urls(url):
             lines = text.split('\n')
             urls = {}
             for line in lines:
+                if line.strip():
+                    service, url = line.split(': ', 1)
+                    urls[service.strip()] = url.strip()
+            return urls
+    except Exception as e:
+        print(f"Ошибка при загрузке списка платформ: {e}")
+        return {}
+
+
+# Загрузка списка платформ из локального файла
+async def load_urls_from_file():
+    try:
+        with open('platformdb', 'r') as file:
+            urls = {}
+            for line in file:
                 if line.strip():
                     service, url = line.split(': ', 1)
                     urls[service.strip()] = url.strip()
@@ -130,6 +152,21 @@ async def load_dns_servers(url):
             lines = text.split('\n')
             dns_servers = {}
             for line in lines:
+                if line.strip():
+                    service, servers = line.split(': ', 1)
+                    dns_servers[service.strip()] = servers.strip().split()
+            return dns_servers
+    except Exception as e:
+        print(f"Ошибка при загрузке списка DNS серверов: {e}")
+        return {}
+
+
+# Загрузка списка DNS серверов из локального файла
+async def load_dns_from_file():
+    try:
+        with open('dnsdb', 'r') as file:
+            dns_servers = {}
+            for line in file:
                 if line.strip():
                     service, servers = line.split(': ', 1)
                     dns_servers[service.strip()] = servers.strip().split()
@@ -160,6 +197,19 @@ async def get_cloudflare_ips():
     except Exception as e:
         print("Ошибка при получении IP адресов Cloudflare:", e)
         return set()
+
+
+# Загрузка списков DNS имен из сети и локальных файлов
+async def load_dns_names(url_or_file):
+    if url_or_file.startswith("http"):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url_or_file)
+            response.raise_for_status()
+            return response.text.splitlines()
+    else:
+        # Локальный файл
+        with open(url_or_file, 'r', encoding='utf-8') as file:
+            return file.read().splitlines()
 
 
 async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_count, cloudflare_ips, cloudflare_ips_count, total_domains_processed, include_cloudflare):
@@ -253,14 +303,14 @@ def check_service_config(service, urls, local_dns_names):
 
 
 def check_include_cloudflare(cloudflare):
-    if cloudflare.lower() == 'yes':
+    if cloudflare in ['yes', 'y']:
         return True
-    elif cloudflare.lower() == 'no':
+    elif cloudflare in ['no', 'n']:
         return False
     else:
         return input(f"\n{yellow('Исключить IP адреса Cloudflare из итогового списка?')}"
                      f"\n{green('yes')} - исключить"
-                     f"\n{green('Enter')} - оставить: ").strip().lower() == "yes"
+                     f"\n{green('Enter')} - оставить: ").strip().lower() in ['yes', 'y']
 
 
 def check_dns_servers(dns_servers, dns_server_indices):
@@ -467,13 +517,17 @@ async def main():
 
     # Инициализация настроек из переданного конфигурационного файла
     config_file = args.config
-    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway = read_config(config_file)
+    service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, localdns = read_config(config_file)
 
-    # Load URLs
-    platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
-    urls = await load_urls(platform_db_url)
+    # Загрузка списка платформ
+    if localplatform in ['yes', 'y']:
+        urls = await load_urls_from_file()
 
-    # Load local DNS names from "custom-dns-list.txt" if it exists
+    else:
+        platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
+        urls = await load_urls(platform_db_url)
+
+    # Подхват "custom-dns-list.txt" если существует
     local_dns_names = []
     if os.path.exists('custom-dns-list.txt'):
         with open('custom-dns-list.txt', 'r', encoding='utf-8-sig') as file:
@@ -483,17 +537,22 @@ async def main():
     selected_services = check_service_config(service, urls, local_dns_names)
 
     # Загрузка списка DNS-серверов
-    dns_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/dnsdb"
-    dns_servers = await load_dns_servers(dns_db_url)
+    if localdns in ['yes', 'y']:
+        dns_servers = await load_dns_from_file()
+
+    else:
+        dns_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/dnsdb"
+        dns_servers = await load_dns_servers(dns_db_url)
 
     # Выбор DNS-серверов
     selected_dns_servers = check_dns_servers(dns_servers, dns_server_indices)
 
-    # Инициализация IP-адресов Cloudflare
-    cloudflare_ips = await get_cloudflare_ips()
-
     # Фильтр Cloudflare
     include_cloudflare = check_include_cloudflare(cloudflare)
+    if include_cloudflare:  # Загрузка IP-адресов Cloudflare
+        cloudflare_ips = await get_cloudflare_ips()
+    else:
+        cloudflare_ips = set()
 
     unique_ips_all_services = set()
     semaphore = init_semaphores(request_limit)
@@ -507,15 +566,14 @@ async def main():
             tasks.append(resolve_dns(service, local_dns_names, selected_dns_servers, cloudflare_ips,
                                      unique_ips_all_services, semaphore, null_ips_count, cloudflare_ips_count,
                                      total_domains_processed, include_cloudflare))
+
         else:
-            dns_names_url = urls[service]
-            async with httpx.AsyncClient() as client:
-                response = await client.get(dns_names_url)
-                response.raise_for_status()
-                dns_names = response.text.splitlines()
+            url_or_file = urls[service]
+            dns_names = await load_dns_names(url_or_file)
             tasks.append(resolve_dns(service, dns_names, selected_dns_servers, cloudflare_ips, unique_ips_all_services,
                                      semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed,
                                      include_cloudflare))
+
 
     results = await asyncio.gather(*tasks)
 
