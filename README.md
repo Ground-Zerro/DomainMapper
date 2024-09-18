@@ -1,5 +1,21 @@
 ## Domain Mapper
+<details>
+  <summary>Что нового (нажать чтоб открыть)</summary>
 
+- Режим работы с личными (локальными) `platformdb` и `dnsdb`. 
+- Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
+- Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
+- Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
+- Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
+- Кастомное имя конфигурационного файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/25)
+- Добавлен сервис Github Copilot. [Запрос @aspirisen](https://github.com/Ground-Zerro/DomainMapper/issues/23)
+- Keenetic CLI формат сохранения. [Запрос @vchikalkin](https://github.com/Ground-Zerro/DomainMapper/pull/20)
+- Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
+- Агрегация маршрутов до /24, /16. [Запрос @sergeeximius](https://github.com/Ground-Zerro/DomainMapper/issues/8)
+- OVPN формат сохранения. [Запрос @SonyLo](https://github.com/Ground-Zerro/DomainMapper/pull/13)
+- Mikrotik формат сохранения. [Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
+
+</details>
 
 **Описание:** Инструмент на языке Python, предназначенный для разрешения DNS имен популярных веб-сервисов в IP-адреса.
 
@@ -27,10 +43,12 @@
 
 </details>
 
+
 **Функции:**
 - Разрешение доменных имен популярных сервисов в IP-адреса.
 - Агрегация маршрутов до /16 (255.255.0.0), /24 (255.255.255.0).
 - Фильтрация IP-адресов Cloudflare (по желанию).
+
 
 **Особенности:**
 - Можно выбрать системный DNS сервер, популярный публичный, либо их комбинацию.
@@ -42,40 +60,38 @@
 Конфигурационный файл позволяет настроить работу скрипта в "молчаливом" режиме - без промтов к пользователю.
 Так же в конфигурационном файле можно добавить выполнение кастомной команды в консоли для запуска другого скрипта или программы при завершении его работы.
 
-**Зависимости:** Для работы Domain Mapper необходимо наличие следующих библиотек Python:
-- configparser, ipaddress, dnspython, httpx, colorama.
 
-*Не забудьте установить их перед запуском:*
-```
-pip3 install -r requirements.txt
-```
+###  Использование:
 
-**Использование:**
-- Запустить `main.py` с помощью Python.
+1. Установите зависимости:
 
-*Можно отредактировать настройки под свои задачи в "config.ini".*
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Отредактируйте `config.ini` под свои задачи (опционально)
+
+4. Запустите скрипт:
+
+   ```bash
+   python main.py
+   ```
+
 
 <details>
-  <summary>Дополнительный личный список с доменными именами (нажать чтоб открыть)</summary>
+  <summary>Личный список с доменными именами (нажать чтоб открыть)</summary>
 
 - Создать файл "custom-dns-list.txt", записать в него DNS имена (одна строчка - одно имя) и положить рядом со скриптом.  Список будет подхвачен при запуске и отображен в меню как "Custom DNS list".
-
 </details>
+
 
 <details>
   <summary>Запуск скрипта с файлом конфигурации отличным от config.ini (нажать чтоб открыть)</summary>
 
-- Можно передавать путь к конфигурационному файлу при запуске скрипта с помощью опции `-c` (или `--config`). Если параметр не указан, по умолчанию будет использоваться файл config.ini.
+- Можно передавать путь к конфигурационному файлу при запуске скрипта с помощью опции `-c` (или `--config`). Если параметр не указан, по умолчанию будет использоваться файл `config.ini`.
 
 Пример использования: `main.py -с myconfig.ini` или `python main.py -с config2.ini` или `main.py -с srv5.ini` и т.п.
-
 </details>
 
-<details>
-  <summary>Кто не знает "как", но кому "очень нужно" (нажать чтоб открыть)</summary>
-
-- Загляните в директорию "Windows" репозитория.
-</details>
 
 <details>
   <summary>Локальный режим работы (нажать чтоб открыть)</summary>
@@ -111,29 +127,14 @@ api.openai.com
 arena.openai.com
 ```
 Указание URL вместо доменного имени (например `ab.chatgpt.com/login` вместо `ab.chatgpt.com` и т.п.) приведет к ошибке.
-
 </details>
-
 
 
 <details>
-  <summary>Что нового (нажать чтоб открыть)</summary>
+  <summary>Для пользователей Windows, не знающих "как", но кому "очень нужно" (нажать чтоб открыть)</summary>
 
-- Режим работы с личными (локальными) `platformdb` и `dnsdb`. 
-- Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
-- Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
-- Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
-- Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
-- Кастомное имя конфигурационного файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/25)
-- Добавлен сервис Github Copilot. [Запрос @aspirisen](https://github.com/Ground-Zerro/DomainMapper/issues/23)
-- Keenetic CLI формат сохранения. [Запрос @vchikalkin](https://github.com/Ground-Zerro/DomainMapper/pull/20)
-- Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
-- Агрегация маршрутов до /24, /16. [Запрос @sergeeximius](https://github.com/Ground-Zerro/DomainMapper/issues/8)
-- OVPN формат сохранения. [Запрос @SonyLo](https://github.com/Ground-Zerro/DomainMapper/pull/13)
-- Mikrotik формат сохранения. [Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
-
+- Загляните в директорию "Windows" репозитория.
 </details>
-
 
 
 ##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
