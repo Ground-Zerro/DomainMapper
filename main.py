@@ -62,11 +62,11 @@ def read_config(cfg_file):
             print(f"{Style.BRIGHT}Фильтрация IP-адресов Cloudflare:{Style.RESET_ALL} {'включена' if cloudflare in ['y', 'yes'] else 'вЫключена' if cloudflare in ['n', 'no'] else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'до /16 подсети (255.255.0.0)' if subnet == '16' else 'до /24 подсети (255.255.255.0)' if subnet == '24' else 'вЫключена' if subnet in ['n', 'no'] else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'Mikrotik CLI' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Keenetic CLI' if filetype == 'keenetic' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
-            if filetype not in ['ip', 'cidr', 'mikrotik', 'ovpn', 'wireguard', 'keenetic']:
+            if filetype in ['win', 'unix', '']:
                 print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для Windows и Linux route:{Style.RESET_ALL} {gateway if gateway else 'спросить у пользователя'}")
-            if filetype not in ['ip', 'unix', 'cidr', 'win', 'mikrotik', 'ovpn', 'wireguard']:
+            if filetype in ['keenetic', '']:
                 print(f"{Style.BRIGHT}Шлюз/Имя интерфейса для Keenetic CLI:{Style.RESET_ALL} {ken_gateway if ken_gateway else 'спросить у пользователя'}")
-            if filetype not in ['ip', 'unix', 'cidr', 'win', 'ovpn', 'wireguard', 'keenetic']:
+            if filetype in ['mikrotik', '']:
                 print(f"{Style.BRIGHT}Имя списка для Mikrotik firewall:{Style.RESET_ALL} {mk_list_name if mk_list_name else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Сохранить результат в файл:{Style.RESET_ALL} {filename}")
             print(f"{Style.BRIGHT}Выполнить по завершению:{Style.RESET_ALL} {run_command if run_command else 'не указано'}")
@@ -235,7 +235,7 @@ async def resolve_domain(domain, resolver, semaphore, dns_server_name, null_ips_
 
 async def resolve_dns(service, dns_names, dns_servers, cloudflare_ips, unique_ips_all_services, semaphore, null_ips_count, cloudflare_ips_count, total_domains_processed, include_cloudflare):
     try:
-        print(f"{Fore.YELLOW}Анализ DNS имен платформы {service}...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Загрузка DNS имен платформы {service}...{Style.RESET_ALL}")
 
         tasks = []
         for server_name, servers in dns_servers:
@@ -302,6 +302,7 @@ def check_service_config(service, urls, local_dns_names):
     return services
 
 
+# Промт cloudflare фильтр
 def check_include_cloudflare(cloudflare):
     if cloudflare in ['yes', 'y']:
         return True
@@ -365,12 +366,12 @@ def mk_list_name_input(mk_list_name):
         return mk_list_name
 
 
-# Для mikrotik уплотняем имена сервисов
+# Уплотняем имена сервисов
 def mk_comment(selected_service):
     return ",".join(["".join(word.title() for word in s.split()) for s in selected_service])
 
 
-# Выбор формата сохранения списка разрешенных DNS имен
+# Промт на объединение IP в подсети
 def subnetting(subnet):
     if subnet.lower() == '':  # Если значение пустое, запрашиваем ввод от пользователя
         subnet = input(f"\n{yellow('Объединить IP-адреса в подсети?')} "
@@ -378,7 +379,6 @@ def subnetting(subnet):
                        f"\n{green('24')} - сократить до /24 (255.255.255.0)"
                        f"\n{green('Enter')} - пропустить: ").strip().lower()
 
-    # Обрабатываем ввод или параметр
     if subnet == '16':
         return "16", "255.255.0.0"
     elif subnet == '24':
@@ -387,6 +387,7 @@ def subnetting(subnet):
         return "32", "255.255.255.255"
 
 
+# Агрегация маршрутов
 def group_ips_in_subnets(filename, submask):
     try:
         # Чтение всех IP-адресов из файла
@@ -438,6 +439,7 @@ def group_ips_in_subnets(filename, submask):
         print(f"{red('Ошибка при обработке файла:')} {e}")
 
 
+# Выбор формата сохранения результатов
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, submask, ken_gateway):
     def read_file(filename):
         try:
@@ -478,15 +480,15 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         return
 
     # Запрашиваем IP шлюза для win и unix
-    if filetype.lower() in ['win', 'unix']:
+    if filetype in ['win', 'unix']:
         gateway = gateway_input(gateway)
 
     # Запрашиваем IP шлюза и Имя интерфейса для keenetic
-    if filetype.lower() in ['keenetic']:
+    if filetype in ['keenetic']:
         ken_gateway = ken_gateway_input(ken_gateway)
 
     # Запрашиваем mk_list_name для Mikrotik
-    if filetype.lower() == 'mikrotik':
+    if filetype in 'mikrotik':
         mk_list_name = mk_list_name_input(mk_list_name)
 
     formatters = {
