@@ -2,7 +2,7 @@
 <details>
   <summary>Что нового (нажать чтоб открыть)</summary>
 
-- Режим работы с личными (локальными) `platformdb` и `dnsdb`. 
+- Режим работы с личными (локальными) `platformdb` и `dnsdb`. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26) 
 - Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
 - Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
 - Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
