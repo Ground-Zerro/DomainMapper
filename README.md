@@ -52,6 +52,7 @@ pip3 install -r requirements.txt
 
 **Использование:**
 - Запустить `main.py` с помощью Python.
+
 *Можно отредактировать настройки под свои задачи в "config.ini".*
 
 <details>
