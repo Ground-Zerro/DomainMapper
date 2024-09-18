@@ -81,6 +81,14 @@
   <summary>Личный список с доменными именами (нажать чтоб открыть)</summary>
 
 - Создать файл "custom-dns-list.txt", записать в него DNS имена (одна строчка - одно имя) и положить рядом со скриптом.  Список будет подхвачен при запуске и отображен в меню как "Custom DNS list".
+
+- Пример файла "custom-dns-list.txt":
+```
+ab.chatgpt.com
+api.openai.com
+arena.openai.com
+```
+Указание URL вместо доменного имени (например `ab.chatgpt.com/login` вместо `ab.chatgpt.com` и т.п.) приведет к ошибке.
 </details>
 
 
@@ -102,8 +110,8 @@
 - Формат файла `platformdb`: Название сервиса двоеточие путь к локальному файлу.
 Пример:
 ```
-Torrent Truckers: platforms/dns-ttruckers.txt
-Search engines: platforms/dns-search-engines.txt
+Torrent Truckers: platforms/dns-ttruckers.lst
+Search engines: dns-search-engines.txt
 Twitch: platforms/dns-twitch.txt
 ```
 
