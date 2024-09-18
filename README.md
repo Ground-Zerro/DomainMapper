@@ -49,21 +49,72 @@ pip3 install -r requirements.txt
 **Использование:**
 - Запустить с помощью Python. Для работы необходим только "main.py" и (по желанию) файл "config.ini".
 
-**Работа с личным списком DNS:**
+
+<details>
+  <summary>Дополнительный личный список с доменными именами (нажать чтоб открыть)</summary>
+
 - Создать файл "custom-dns-list.txt", записать в него DNS имена (одна строчка - одно имя) и положить рядом со скриптом.  Список будет подхвачен при запуске и отображен в меню как "Custom DNS list".
 
-**Использование скрипта с кастомным конфигурационным файлом**
+</details>
+
+<details>
+  <summary>Запуск скрипта с файлом конфигурации отличным от config.ini (нажать чтоб открыть)</summary>
+
 - Можно передавать путь к конфигурационному файлу при запуске скрипта с помощью опции `-c` (или `--config`). Если параметр не указан, по умолчанию будет использоваться файл config.ini.
 
 Пример использования: `main.py -с myconfig.ini` или `python main.py -с config2.ini` или `main.py -с srv5.ini` и т.п.
 
-**Кто не знает "как", но кому "очень нужно":**
+</details>
+
+<details>
+  <summary>Кто не знает "как", но кому "очень нужно" (нажать чтоб открыть)</summary>
+
 - Загляните в директорию "Windows" репозитория.
+</details>
+
+<details>
+  <summary>Локальный режим работы (нажать чтоб открыть)</summary>
+
+В этом режиме списки DNS серверов и сервисов будут загружены из локальных файлов в папке со скриптом, а не из сети.
+
+Загружать список сервисов из файла `platformdb` - указать `localplatform = yes` в config.ini.
+- Формат файла: Название сервиса двоеточие путь к локальному файлу.
+Пример:
+```
+Torrent Truckers: platforms/dns-ttruckers.txt
+Search engines: platforms/dns-search-engines.txt
+Twitch: platforms/dns-twitch.txt
+```
+
+Загружать список DNS серверов из файла `dnsdb` в папке со скриптом - указать `localplatform = yes` в config.ini.
+- Формат файла: Название DNS сервера двоеточие IP-адрес пробел IP-адрес.
+Пример:
+```
+CleanBrowsing: 185.228.168.9 185.228.169.9
+Alternate DNS: 76.76.19.19 76.223.122.150
+AdGuard DNS: 94.140.14.14 94.140.15.15
+```
+
+Обратите внимание, что при использовании этого режима названия сервисов и нумерация DNS серверов в config.ini должны соответствовать указанными вами в platformdb и dnsdb файлах.
+-
+
+- Формат файла с доменными именами: один домен на одну строку.
+Пример:
+```
+ab.chatgpt.com
+api.openai.com
+arena.openai.com
+```
+Указание URL вместо доменного имени (например `ab.chatgpt.com/login` вместо `ab.chatgpt.com` и т.п.) приведет к ошибке.
+
+</details>
+
 
 
 <details>
-  <summary>Что нового</summary>
+  <summary>Что нового (нажать чтоб открыть)</summary>
 
+- Режим работы с личными (локальными) `platformdb` и `dnsdb`. 
 - Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
 - Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
 - Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
@@ -74,7 +125,7 @@ pip3 install -r requirements.txt
 - Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
 - Агрегация маршрутов до /24, /16. [Запрос @sergeeximius](https://github.com/Ground-Zerro/DomainMapper/issues/8)
 - OVPN формат сохранения. [Запрос @SonyLo](https://github.com/Ground-Zerro/DomainMapper/pull/13)
-- Mikrotik формат сохранения.[Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
+- Mikrotik формат сохранения. [Запрос @Shaman2010](https://github.com/Ground-Zerro/DomainMapper/pull/9)
 
 </details>
 
