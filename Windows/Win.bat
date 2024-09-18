@@ -91,6 +91,8 @@ move /y domain-ip-resolve.txt %UserProfile%\Desktop\domain-ip-resolve.txt
 echo Программа завершена.
 del /q /f main.py
 endlocal
+echo файл скопирован в %UserProfile%\Desktop\domain-ip-resolve.txt
+pause
 exit /b 0
 
 ::То-ли при выгрузке на github, то-ли при скачивании с него, в файл как-то попадает BOM... Как это починить я ХЗ.
