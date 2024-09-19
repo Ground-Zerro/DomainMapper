@@ -89,7 +89,7 @@ Search engines: dns-search-engines.txt
 Twitch: platforms/service/dns-twitch.txt
 ```
 
-Для включения загрузки списка DNS-серверов из локального файла `dnsdb`, укажите `localplatform = yes` в config.ini.
+Для включения загрузки списка DNS-серверов из локального файла `dnsdb`, укажите `localdns = yes` в config.ini.
 - Формат файла `dnsdb`: название DNS-сервера и его IP-адреса через двоеточие и пробел.
 Пример:
 ```
