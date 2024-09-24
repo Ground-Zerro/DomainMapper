@@ -1,13 +1,14 @@
 ## Domain Mapper
 <details>
-  <summary>Что нового (нажать чтоб открыть)</summary>
+  <summary>Что нового (нажать, чтобы открыть)</summary>
 
-- Режим работы с личными (локальными) `platformdb` и `dnsdb`. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26) 
+- [Комбинированный режим объединения IP-адресов в подсеть.](https://github.com/Ground-Zerro/DomainMapper/issues/36)
+- Возможность загрузки списков сервисов и DNS-серверов из локального файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26) 
 - Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
 - Добавлен сервис Twitch. [Запрос @shevernitskiy](https://github.com/Ground-Zerro/DomainMapper/issues/31)
 - Добавлен Yandex DNS сервер. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26)
 - Опция в config.ini: Отключить отображение сведений о загруженой конфигурации.
-- Кастомное имя конфигурационного файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/25)
+- Передача имени конфигурационного файла ключом в терминале/командной строке. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/25)
 - Добавлен сервис Github Copilot. [Запрос @aspirisen](https://github.com/Ground-Zerro/DomainMapper/issues/23)
 - Keenetic CLI формат сохранения. [Запрос @vchikalkin](https://github.com/Ground-Zerro/DomainMapper/pull/20)
 - Wireguard формат сохранения. [Запрос @sanikroot](https://github.com/Ground-Zerro/DomainMapper/issues/18)
@@ -21,7 +22,7 @@
 
 
 <details>
-  <summary>Поддерживаемые сервисы (нажать чтобы открыть)</summary>
+  <summary>Поддерживаемые сервисы (нажать, чтобы открыть)</summary>
 
 - [Antifilter - community edition](https://community.antifilter.download/)
 - Youtube
@@ -46,7 +47,7 @@
 
 **Функции:**
 - Преобразование доменных имен популярных сервисов в IP-адреса.
-- Агрегация маршрутов до сетей /16 (255.255.0.0), /24 (255.255.255.0).
+- Агрегация маршрутов в /16 (255.255.0.0) и /24 (255.255.255.0) подсети. Комбинированный режим /24 + /32.
 - Фильтрация IP-адресов Cloudflare (опционально).
 - Восемь вариантов сохранения результатов.
 
@@ -68,7 +69,7 @@
    ```
 2. Отредактируйте `config.ini` под свои задачи (опционально)
 
-4. Запустите скрипт:
+3. Запустите скрипт:
 
    ```bash
    python main.py
@@ -76,24 +77,27 @@
 
 
 <details>
-  <summary>Локальный режим работы (нажать чтобы открыть)</summary>
+  <summary>Локальный режим работы (нажать, чтобы открыть)</summary>
 
 В этом режиме списки DNS-серверов и сервисов загружаются из локальных файлов в папке со скриптом, а не из сети.
 
 Для включения загрузки списка сервисов из локального файла `platformdb`, укажите `localplatform = yes` в config.ini.
 - Формат файла `platformdb`: название сервиса и путь к локальному файлу через двоеточие.
+Поддерживается работа как с файлами на локальной машине, так и их загрузка из сети по http(s).
 Пример:
 ```
 Torrent Truckers: platforms/dns-ttruckers.lst
 Search engines: dns-search-engines.txt
 Twitch: platforms/service/dns-twitch.txt
+Adobe: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-adobe.txt
 ```
 
 Для включения загрузки списка DNS-серверов из локального файла `dnsdb`, укажите `localdns = yes` в config.ini.
 - Формат файла `dnsdb`: название DNS-сервера и его IP-адреса через двоеточие и пробел.
+Важно - нужно обязательно указать два IP-адреса для каждого названия (можно один и тот же), это необходимо для правильной работы кода. 
 Пример:
 ```
-CleanBrowsing: 185.228.168.9 185.228.169.9
+SkyDNS: 77.88.8.8 77.88.8.8
 Alternate DNS: 76.76.19.19 76.223.122.150
 AdGuard DNS: 94.140.14.14 94.140.15.15
 ```
@@ -112,7 +116,7 @@ arena.openai.com
 
 
 <details>
-  <summary>Запуск скрипта с файлом конфигурации, отличным от `config.ini` (нажать чтобы открыть)</summary>
+  <summary>Запуск скрипта с файлом конфигурации, отличным от `config.ini` (нажать, чтобы открыть)</summary>
 
 - Указать путь к другому конфигурационному файлу при запуске скрипта можно с помощью опции `-c` (или `--config`). Если параметр не указан, по умолчанию будет использоваться файл `config.ini`.
 
@@ -121,7 +125,7 @@ arena.openai.com
 
 
 <details>
-  <summary>Личный (локальный) список с доменными именами (нажать чтобы открыть)</summary>
+  <summary>Личный (локальный) список с доменными именами (нажать, чтобы открыть)</summary>
 
 - Создайте файл `custom-dns-list.txt`, запишите в него доменные имена и разместите его рядом со скриптом. Список будет автоматически подхвачен при запуске и появится в меню как "Custom DNS list".
 
@@ -136,7 +140,7 @@ arena.openai.com
 
 
 <details>
-  <summary>Для пользователей Windows, не знающих "как", но кому "очень нужно" (нажать чтобы открыть)</summary>
+  <summary>Для пользователей Windows, не знающих "как", но кому "очень нужно" (нажать, чтобы открыть)</summary>
 
 - Загляните в директорию [Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/Windows) репозитория.
 </details>
