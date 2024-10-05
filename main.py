@@ -226,9 +226,13 @@ async def get_cloudflare_ips():
 async def load_dns_names(url_or_file):
     if url_or_file.startswith("http"):
         async with httpx.AsyncClient() as client:
-            response = await client.get(url_or_file)
-            response.raise_for_status()
-            return response.text.splitlines()
+            try:
+                response = await client.get(url_or_file)
+                response.raise_for_status()
+                return response.text.splitlines()
+            except httpx.HTTPStatusError as e:
+                print(f"Ошибка при загрузке DNS имен: {e}")
+                return []
     else:
         # Локальный файл
         with open(url_or_file, 'r', encoding='utf-8') as file:
