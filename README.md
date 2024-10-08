@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- Добавлен сервис Discord. [Запрос @AHuMex](https://github.com/Ground-Zerro/DomainMapper/issues/38)
 - [Комбинированный режим объединения IP-адресов в подсеть.](https://github.com/Ground-Zerro/DomainMapper/issues/36)
 - Возможность загрузки списков сервисов и DNS-серверов из локального файла. [Запрос @Noksa](https://github.com/Ground-Zerro/DomainMapper/issues/26) 
 - Вспомагательные [утилиты](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) для поиска субдоменов.
@@ -40,6 +41,7 @@
 - Search engines
 - [Github сopilot](https://github.com/features/copilot)
 - Twitch
+- Discord
 - Личный список
 
 </details>
