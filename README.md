@@ -43,6 +43,7 @@
 - [Github сopilot](https://github.com/features/copilot)
 - Twitch
 - Discord
+- Jetbrains
 - Личный список
 
 </details>
