@@ -23,3 +23,4 @@ us.tiktok.com
 verify-sg.tiktok.com
 v16-tiktokcdn-com.akamaized.net
 v16-va.tiktokcdn.com
+mcs-va.tiktokv.com
