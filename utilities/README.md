@@ -14,7 +14,7 @@
 
 ### Использование
 
-1. Установите зависимости:
+1. Установите [зависимости](https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt):
 
    ```bash
    pip install -r requirements.txt
@@ -46,7 +46,7 @@
 
 ### Использование
 
-1. Установите зависимости:
+1. Установите [зависимости](https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt):
 
    ```bash
    pip install -r requirements.txt
