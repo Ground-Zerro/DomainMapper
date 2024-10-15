@@ -1,7 +1,7 @@
 # Вспомогательные утилиты:
 - [subdomain - поиск субдоменов](#subdomain)
 - [verified - проверка активности доменов](#verified)
-- [convert - проверка активности доменов](#convert)
+- [convert - конвертер маршрутов](#convert)
 
 ## subdomain
 
