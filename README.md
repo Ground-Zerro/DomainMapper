@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- [Конвертер маршутов](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) как отдельная утилита. [Запрос @Andrey999r](https://github.com/Ground-Zerro/DomainMapper/discussions/43) 
 - Добавлен сервис Jetbrains. [Запрос @SocketSomeone](https://github.com/Ground-Zerro/DomainMapper/issues/40)
 - Добавлен сервис Discord. [Запрос @AHuMex](https://github.com/Ground-Zerro/DomainMapper/issues/38)
 - [Комбинированный режим объединения IP-адресов в подсеть.](https://github.com/Ground-Zerro/DomainMapper/issues/36)
