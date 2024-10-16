@@ -16,7 +16,7 @@
 
 ### Использование
 
-1. Установите [зависимости](https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt):
+1. Установите [зависимости](https://github.com/Ground-Zerro/DomainMapper/blob/main/requirements.txt):
 
    ```bash
    pip install -r requirements.txt
@@ -48,7 +48,7 @@
 
 ### Использование
 
-1. Установите [зависимости](https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt):
+1. Установите [зависимости](https://github.com/Ground-Zerro/DomainMapper/blob/main/requirements.txt):
 
    ```bash
    pip install -r requirements.txt
@@ -84,7 +84,7 @@
 
 ### Использование
 
-1. Установите [зависимости](https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt):
+1. Установите [зависимости](https://github.com/Ground-Zerro/DomainMapper/blob/main/requirements.txt):
 
    ```bash
    pip install -r requirements.txt
