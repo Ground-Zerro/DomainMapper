@@ -152,3 +152,6 @@ arena.openai.com
 
 
 ##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
+
+## ВАЖНО:
+Почему использование подготовленных кем-то IP-листов имеет мало смысла [ЖМИ](https://github.com/Ground-Zerro/DomainMapper/discussions/50)
