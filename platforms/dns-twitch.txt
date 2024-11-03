@@ -187,7 +187,6 @@ tst.twitch.tv
 ttv-redirect.m7g.twitch.tv
 tv.twitch.tv
 tw.blog.twitch.tv
-twitch.tv
 upload.twitch.tv
 upload2.twitch.tv
 usher.twitch.tv

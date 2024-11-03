@@ -12,7 +12,6 @@ corona.jetbrains.space
 dc.jetbrains.space
 element.jetbrains.space
 eu-1.jetbrains.space
-jetbrains.space
 justtoplay.jetbrains.space
 maven.jetbrains.space
 maven.pkg.jetbrains.space
@@ -76,7 +75,6 @@ internship.jetbrains.com
 jb-team.fls.jetbrains.com
 jbstats.jetbrains.com
 jetarchive.jetbrains.com
-jetbrains.com
 jetpeople.jetbrains.com
 local.api.jetbrains.com
 lp.jetbrains.com
