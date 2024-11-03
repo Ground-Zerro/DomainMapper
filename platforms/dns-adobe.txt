@@ -57,4 +57,3 @@ upload.adobe.io
 user.adobe.io
 watch.adobe.io
 web.adobe.io
-www.adobe.com

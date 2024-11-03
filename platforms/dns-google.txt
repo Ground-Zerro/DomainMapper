@@ -29,4 +29,3 @@ cloud.google.com
 gvt2.com
 gvt3.com
 google.ru
-www.google.com

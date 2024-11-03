@@ -12,7 +12,6 @@ corona.jetbrains.space
 dc.jetbrains.space
 element.jetbrains.space
 eu-1.jetbrains.space
-jetbrains.space
 justtoplay.jetbrains.space
 maven.jetbrains.space
 maven.pkg.jetbrains.space
@@ -76,7 +75,6 @@ internship.jetbrains.com
 jb-team.fls.jetbrains.com
 jbstats.jetbrains.com
 jetarchive.jetbrains.com
-jetbrains.com
 jetpeople.jetbrains.com
 local.api.jetbrains.com
 lp.jetbrains.com
@@ -112,8 +110,7 @@ uploads.jetbrains.com
 uploads.services.jetbrains.com
 upsource.jetbrains.com
 view.datalore.jetbrains.com
-www.jetbrains.com
-www.onboard.jetbrains.com
+onboard.jetbrains.com
 youtube.master-zdchint.mau.jetbrains.com
 youtube.staging-zdchint.mau.jetbrains.com
 zillow.fls.jetbrains.com

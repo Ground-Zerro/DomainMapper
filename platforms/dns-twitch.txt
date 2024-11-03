@@ -187,7 +187,6 @@ tst.twitch.tv
 ttv-redirect.m7g.twitch.tv
 tv.twitch.tv
 tw.blog.twitch.tv
-twitch.tv
 upload.twitch.tv
 upload2.twitch.tv
 usher.twitch.tv
@@ -201,17 +200,7 @@ watch.twitch.tv
 webdisk.staging.twitch.tv
 wwq.rc.twitch.tv
 www-origin-anycast.twitch.tv
-www.cis.blog.twitch.tv
-www.cp2.rc.twitch.tv
-www.ica.rc.twitch.tv
-www.if.rc.twitch.tv
-www.it.blog.twitch.tv
-www.link.twitch.tv
-www.lion.rc.twitch.tv
-www.safesync.rc.twitch.tv
-www.staging.twitch.tv
-www.stash.rc.twitch.tv
-www.twitch.tv
-www.wwq.rc.twitch.tv
+staging.twitch.tv
+stash.rc.twitch.tv
 zh-cn.twitch.tv
 zh-tw.twitch.tv

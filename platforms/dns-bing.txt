@@ -20,5 +20,4 @@ services.bingapis.com
 ssl.bing.com
 sydney.bing.com
 th.bing.com
-www.bing.com
 www2.bing.com

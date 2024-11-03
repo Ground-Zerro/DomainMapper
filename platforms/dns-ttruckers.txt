@@ -20,7 +20,7 @@ thepirate-bay.org
 torrentgalaxy.to
 torrent-games.best
 torrentz2eu.org
-www.limetorrents.info
-www.pirateproxy-bay.com
-www.torlock.com
-www.torrentdownloads.me
+limetorrents.info
+pirateproxy-bay.com
+torlock.com
+torrentdownloads.me

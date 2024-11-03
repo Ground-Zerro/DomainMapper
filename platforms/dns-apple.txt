@@ -206,6 +206,4 @@ weather-data.apple.com,
 websitereview.corp.apple.com,
 wps.apple.com,
 wu.apple.com.akadns.net,
-www.apple.com,
-www.apple.com.cn,
 xp.apple.com
