@@ -110,8 +110,7 @@ uploads.jetbrains.com
 uploads.services.jetbrains.com
 upsource.jetbrains.com
 view.datalore.jetbrains.com
-www.jetbrains.com
-www.onboard.jetbrains.com
+onboard.jetbrains.com
 youtube.master-zdchint.mau.jetbrains.com
 youtube.staging-zdchint.mau.jetbrains.com
 zillow.fls.jetbrains.com

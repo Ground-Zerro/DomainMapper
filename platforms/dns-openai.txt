@@ -29,5 +29,4 @@ platform.api.openai.com
 platform.openai.com
 spinningup.openai.com
 universe.openai.com
-www.openai.com
 chatgpt.com
