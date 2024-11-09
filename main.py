@@ -42,7 +42,7 @@ def blue(text):
 def read_config(cfg_file):
     try:
         config = configparser.ConfigParser()
-        with open(cfg_file, 'r', encoding='utf-8-sig') as file:
+        with open(cfg_file, 'r', encoding='utf-8') as file:
             config.read_file(file)
         if 'DomainMapper' in config:
             config = config['DomainMapper']
@@ -415,7 +415,7 @@ def subnet_input(subnet):
 # Агрегация маршрутов
 def group_ips_in_subnets(filename, subnet):
     try:
-        with open(filename, 'r', encoding='utf-8-sig') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             ips = {line.strip() for line in file if line.strip()}  # Собираем уникальные IP адреса
 
         subnets = set()
@@ -456,7 +456,7 @@ def group_ips_in_subnets(filename, subnet):
             subnets.update(network_24)  # Базовые IP для /24 подсетей
             print(f"{Style.BRIGHT}IP-адреса агрегированы до масок /24 и /32{Style.RESET_ALL}")
 
-        with open(filename, 'w', encoding='utf-8-sig') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             for subnet in sorted(subnets):
                 file.write(subnet + '\n')
 
@@ -468,7 +468,7 @@ def group_ips_in_subnets(filename, subnet):
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, subnet, ken_gateway):
     def read_file(filename):
         try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
+            with open(filename, 'r', encoding='utf-8') as file:
                 return file.readlines()
         except Exception as e:
             print(f"Ошибка чтения файла: {e}")
@@ -476,7 +476,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
     def write_file(filename, ips, formatter):
         formatted_ips = [formatter(ip.strip()) for ip in ips]
-        with open(filename, 'w', encoding='utf-8-sig') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             if filetype.lower() == 'wireguard':
                 file.write(', '.join(formatted_ips))
             else:
@@ -577,7 +577,7 @@ async def main():
     # Подхват "custom-dns-list.txt" если существует
     local_dns_names = []
     if os.path.exists('custom-dns-list.txt'):
-        with open('custom-dns-list.txt', 'r', encoding='utf-8-sig') as file:
+        with open('custom-dns-list.txt', 'r', encoding='utf-8') as file:
             local_dns_names = [line.strip() for line in file if line.strip()]
 
     # Выбор платформ
@@ -623,7 +623,7 @@ async def main():
 
     results = await asyncio.gather(*tasks)
 
-    with open(filename, 'w', encoding='utf-8-sig') as file:
+    with open(filename, 'w', encoding='utf-8') as file:
         for result in results:
             file.write(result)
 
