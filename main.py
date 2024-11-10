@@ -562,8 +562,7 @@ async def main():
 
     # Инициализация настроек из переданного конфигурационного файла
     config_file = args.config
-    (service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name,
-     subnet, ken_gateway, localplatform, localdns, mk_comment) = read_config(config_file)
+    (service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, localdns, mk_comment) = read_config(config_file)
 
     # Загрузка списка платформ
     if localplatform in ['yes', 'y']:
