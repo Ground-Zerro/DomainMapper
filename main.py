@@ -100,7 +100,7 @@ def read_config(cfg_file):
     except Exception as e:
         print(
             f"{yellow(f'Ошибка загрузки {cfg_file}:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
-        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', '', '', ''
+        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', '', '', '', ''
 
 
 # IP шлюза для win и unix
