@@ -94,7 +94,7 @@ def mk_list_name_input(mk_list_name):
 
 
 # Уплотняем имена сервисов
-def mk_comment(selected_service):
+def comment(selected_service):
     return ",".join(["".join(word.title() for word in s.split()) for s in selected_service])
 
 
@@ -115,7 +115,7 @@ def subnet_input(subnet):
 # Агрегация маршрутов
 def group_ips_in_subnets(filename, subnet):
     try:
-        with open(filename, 'r', encoding='utf-8-sig') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             ips = {line.strip() for line in file if line.strip()}  # Собираем уникальные IP адреса
 
         subnets = set()
@@ -156,7 +156,7 @@ def group_ips_in_subnets(filename, subnet):
             subnets.update(network_24)  # Базовые IP для /24 подсетей
             print(f"{Style.BRIGHT}IP-адреса агрегированы до масок /24 и /32{Style.RESET_ALL}")
 
-        with open(filename, 'w', encoding='utf-8-sig') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             for subnet in sorted(subnets):
                 file.write(subnet + '\n')
 
@@ -168,7 +168,7 @@ def group_ips_in_subnets(filename, subnet):
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, subnet, ken_gateway):
     def read_file(filename):
         try:
-            with open(filename, 'r', encoding='utf-8-sig') as file:
+            with open(filename, 'r', encoding='utf-8') as file:
                 return file.readlines()
         except Exception as e:
             print(f"Ошибка чтения файла: {e}")
@@ -176,7 +176,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
     def write_file(filename, ips, formatter):
         formatted_ips = [formatter(ip.strip()) for ip in ips]
-        with open(filename, 'w', encoding='utf-8-sig') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             if filetype.lower() == 'wireguard':
                 file.write(', '.join(formatted_ips))
             else:
@@ -190,9 +190,9 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 {yellow('В каком формате сохранить файл?')}
 {green('win')} - route add {cyan('IP')} mask {net_mask} {cyan('GATEWAY')}
 {green('unix')} - ip route {cyan('IP')}/{subnet} {cyan('GATEWAY')}
-{green('keenetic')} - ip route {cyan('IP')}/{subnet} {cyan('GATEWAY GATEWAY_NAME')} auto !{mk_comment(selected_service)}
+{green('keenetic')} - ip route {cyan('IP')}/{subnet} {cyan('GATEWAY GATEWAY_NAME')} auto !{comment(selected_service)}
 {green('cidr')} - {cyan('IP')}/{subnet}
-{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{mk_comment(selected_service)}" address={cyan("IP")}/{subnet}
+{green('mikrotik')} - /ip/firewall/address-list add list={cyan("LIST_NAME")} comment="{comment(selected_service)}" address={cyan("IP")}/{subnet}
 {green('ovpn')} - push "route {cyan('IP')} {net_mask}"
 {green('wireguard')} - {cyan('IP')}/{subnet}, {cyan('IP')}/{subnet}, и т.д...
 {green('Enter')} - {cyan('IP')}
@@ -214,11 +214,11 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
     formatters = {
         'win': lambda ip: f"route add {ip} mask {net_mask} {gateway}",
         'unix': lambda ip: f"ip route {ip}/{subnet} {gateway}",
-        'keenetic': lambda ip: f"ip route {ip}/{subnet} {ken_gateway} auto !{mk_comment(selected_service)}",
+        'keenetic': lambda ip: f"ip route {ip}/{subnet} {ken_gateway} auto !{comment(selected_service)}",
         'cidr': lambda ip: f"{ip}/{subnet}",
         'ovpn': lambda ip: f'push "route {ip} {net_mask}"',
         'mikrotik': lambda
-            ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={ip}/{subnet}',
+            ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{comment(selected_service)}" address={ip}/{subnet}',
         'wireguard': lambda ip: f"{ip}/{subnet}"
     }
 
@@ -236,11 +236,10 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         formatters.update({
             'win': lambda ip: f"route add {mix_formatter(ip)} {gateway}",
             'unix': lambda ip: f"ip route {mix_formatter(ip)} {gateway}",
-            'keenetic': lambda ip: f"ip route {mix_formatter(ip)} {ken_gateway} auto !{mk_comment(selected_service)}",
+            'keenetic': lambda ip: f"ip route {mix_formatter(ip)} {ken_gateway} auto !{comment(selected_service)}",
             'cidr': lambda ip: f"{mix_formatter(ip)}",
             'ovpn': lambda ip: f'push "route {mix_formatter(ip)}"',
-            'mikrotik': lambda
-                ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{mk_comment(selected_service)}" address={mix_formatter(ip)}',
+            'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name} comment="{comment(selected_service)}" address={mix_formatter(ip)}',
             'wireguard': lambda ip: f"{mix_formatter(ip)}"
         })
 
@@ -256,7 +255,7 @@ async def main():
     subnet = None
     filetype = None
     gateway = None
-    selected_services = ["service1", "service2"]  # Пример данных
+    selected_services = ["Service"]
     mk_list_name = None
     ken_gateway = None
 
@@ -284,7 +283,7 @@ async def main():
     # Удаляем IP-адреса Cloudflare
     ips -= cloudflare_ips
 
-    with open(filename, 'w', encoding='utf-8-sig') as file:
+    with open(filename, 'w', encoding='utf-8') as file:
         for ip in sorted(ips):
             file.write(ip + '\n')
 
