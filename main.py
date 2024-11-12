@@ -505,7 +505,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
         'keenetic': lambda ip: f"ip route {ip}/{subnet} {ken_gateway} auto !{comment(selected_service)}",
         'cidr': lambda ip: f"{ip}/{subnet}",
         'ovpn': lambda ip: f'push "route {ip} {net_mask}"',
-        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}{f' comment="{comment(selected_service)}"' if mk_comment != "off" else ""} address={ip}/{subnet}',
+        'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}' + (f' comment="{comment(selected_service)}"' if mk_comment != "off" else "") + f' address={ip}/{subnet}',
         'wireguard': lambda ip: f"{ip}/{subnet}"
     }
 
@@ -526,7 +526,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             'keenetic': lambda ip: f"ip route {mix_formatter(ip)} {ken_gateway} auto !{comment(selected_service)}",
             'cidr': lambda ip: f"{mix_formatter(ip)}",
             'ovpn': lambda ip: f'push "route {mix_formatter(ip)}"',
-            'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}{f' comment="{comment(selected_service)}"' if mk_comment != "off" else ""} address={mix_formatter(ip)}',
+            'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}' + (f' comment="{comment(selected_service)}"' if mk_comment != "off" else "") + f' address={mix_formatter(ip)}',
             'wireguard': lambda ip: f"{mix_formatter(ip)}"
         })
 
