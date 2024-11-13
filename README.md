@@ -156,4 +156,4 @@ arena.openai.com
 ##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
 
 ## ВАЖНО:
-Почему использование подготовленных кем-то IP-листов имеет мало смысла [ЖМИ](https://github.com/Ground-Zerro/DomainMapper/discussions/50)
+Использование сделанных "кем-то", а не Вами лично IP-листов и готовых файлов марштутов - **плохая идея** [ЖМИ](https://github.com/Ground-Zerro/DomainMapper/discussions/50)
