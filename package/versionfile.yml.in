@@ -1,0 +1,12 @@
+Version: #VERSION#
+CompanyName: Ground-Zerro
+FileDescription: A tool for scanning and resolving DNS names into IP addresses
+InternalName: DomainMapper
+LegalCopyright: © Ground-Zerro
+OriginalFilename: domainmapper.exe
+ProductName: DomainMapper
+Translation:
+  - langID: 0
+    charsetID: 1200
+  - langID: 1041
+    charsetID: 1251
