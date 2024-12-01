@@ -56,6 +56,15 @@ RUN python3.12 -m pip install --upgrade pip && \
 CMD ["python3.12", "main.py"]
 EOL
 
+# Создаём файл domain-ip-resolve.txt, если его нет
+if [ ! -f "./domain-ip-resolve.txt" ]; then
+    echo "Создаём файл domain-ip-resolve.txt..."
+    touch domain-ip-resolve.txt
+    echo "Файл domain-ip-resolve.txt создан."
+else
+    echo "Файл domain-ip-resolve.txt уже существует."
+fi
+
 # Собираем Docker образ, если его нет
 if ! docker image inspect domainmapper >/dev/null 2>&1; then
     echo "Собираем Docker образ..."
@@ -71,7 +80,10 @@ if docker ps -a | grep -q domainmapper_container; then
 fi
 
 echo "Запускаем Docker контейнер..."
-docker run --name domainmapper_container -v ./domain-ip-resolve.txt:/app/domain-ip-resolve.txt -it domainmapper
+docker run --name domainmapper_container -v "$(pwd)/domain-ip-resolve.txt:/app/domain-ip-resolve.txt" -it domainmapper
+
+# Сообщаем пользователю о местонахождении файла
+echo "Контейнер завершил работу. Файл domain-ip-resolve.txt находится в $(pwd)/domain-ip-resolve.txt"
 
 # Удаляем скрипт после выполнения
 echo "Скрипт завершен, удаляю себя..."
