@@ -30,21 +30,31 @@ else
     echo "Репозиторий DomainMapper уже клонирован."
 fi
 
-# Создаём Dockerfile, если его нет
-if [ ! -f "./Dockerfile" ]; then
-    echo "Создаём Dockerfile..."
-    cat > Dockerfile <<EOL
+# Создаём Dockerfile с установкой Python 3.12
+echo "Создаём Dockerfile..."
+cat > Dockerfile <<EOL
 FROM ubuntu:jammy
+
+# Устанавливаем Python 3.12 и необходимые пакеты
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.12 python3.12-venv python3.12-distutils && \
+    rm -rf /var/lib/apt/lists/*
+
+# Устанавливаем pip для Python 3.12
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+
 WORKDIR /app
 ADD ./DomainMapper /app
-RUN apt-get update -y
-RUN apt-get install python3-pip -y
-RUN pip3 install -r requirements.txt
-CMD ["python3", "main.py"]
+
+# Устанавливаем зависимости проекта
+RUN python3.12 -m pip install --upgrade pip && \
+    python3.12 -m pip install -r requirements.txt
+
+CMD ["python3.12", "main.py"]
 EOL
-else
-    echo "Dockerfile уже существует."
-fi
 
 # Собираем Docker образ, если его нет
 if ! docker image inspect domainmapper >/dev/null 2>&1; then
