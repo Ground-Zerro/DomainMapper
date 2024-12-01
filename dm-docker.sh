@@ -1,37 +1,39 @@
 #!/bin/bash
 
-# Путь к файлу, который проверим на наличие
-FILE="./domain-ip-resolve.txt"
-DOCKER_IMAGE="domainmapper"
-DOCKER_CONTAINER="domainmapper_container"
+# Функция для проверки наличия Docker
+check_docker() {
+    if command -v docker >/dev/null 2>&1; then
+        echo "Docker уже установлен. Версия: $(docker --version)"
+        return 0  # Docker установлен
+    else
+        echo "Docker не найден. Устанавливаем Docker..."
+        return 1  # Docker не установлен
+    fi
+}
 
-# Обновление списка пакетов и установка git
+# Обновляем список пакетов и устанавливаем git, если его нет
 echo "Обновляем список пакетов и устанавливаем git..."
-sudo apt update
-sudo apt install -y git
+apt update && apt install -y git
 
-# Установка Docker, если он не установлен
-if ! command -v docker &> /dev/null
-then
-    echo "Docker не найден. Устанавливаем Docker..."
+# Проверяем и устанавливаем Docker, если его нет
+if ! check_docker; then
     curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh ./get-docker.sh
-else
-    echo "Docker уже установлен."
+    sh ./get-docker.sh
+    rm get-docker.sh  # Удаляем установочный скрипт после установки
 fi
 
-# Клонирование репозитория, если папка DomainMapper не существует
-if [ ! -d "DomainMapper" ]; then
+# Клонируем репозиторий, если его нет
+if [ ! -d "./DomainMapper" ]; then
     echo "Клонируем репозиторий DomainMapper..."
     git clone https://github.com/Ground-Zerro/DomainMapper.git
 else
-    echo "Репозиторий уже клонирован."
+    echo "Репозиторий DomainMapper уже клонирован."
 fi
 
-# Проверяем наличие Dockerfile и создаем его, если он отсутствует
-if [ ! -f "Dockerfile" ]; then
+# Создаём Dockerfile, если его нет
+if [ ! -f "./Dockerfile" ]; then
     echo "Создаём Dockerfile..."
-    cat <<EOF > Dockerfile
+    cat > Dockerfile <<EOL
 FROM ubuntu:jammy
 WORKDIR /app
 ADD ./DomainMapper /app
@@ -39,35 +41,28 @@ RUN apt-get update -y
 RUN apt-get install python3-pip -y
 RUN pip3 install -r requirements.txt
 CMD ["python3", "main.py"]
-EOF
+EOL
 else
     echo "Dockerfile уже существует."
 fi
 
-# Сборка Docker образа, если образ ещё не был собран
-if ! sudo docker images | grep -q "$DOCKER_IMAGE"; then
+# Собираем Docker образ, если его нет
+if ! docker image inspect domainmapper >/dev/null 2>&1; then
     echo "Собираем Docker образ..."
-    sudo docker build -t $DOCKER_IMAGE .
+    docker build -t domainmapper .
 else
-    echo "Docker образ уже существует."
+    echo "Docker образ domainmapper уже существует."
 fi
 
-# Проверяем, существует ли уже контейнер с данным именем
-if sudo docker ps -a --filter "name=$DOCKER_CONTAINER" | grep -q "$DOCKER_CONTAINER"; then
-    # Останавливаем и удаляем старый контейнер, если он существует
-    echo "Контейнер с именем $DOCKER_CONTAINER уже существует. Останавливаем и удаляем его..."
-    sudo docker stop $DOCKER_CONTAINER
-    sudo docker rm $DOCKER_CONTAINER
+# Проверяем наличие контейнера и запускаем его
+if docker ps -a | grep -q domainmapper_container; then
+    echo "Контейнер уже существует. Перезапускаем его..."
+    docker rm -f domainmapper_container  # Удаляем старый контейнер
 fi
 
-# Запуск Docker контейнера
 echo "Запускаем Docker контейнер..."
-sudo docker run -d --name $DOCKER_CONTAINER -v $FILE:/app/domain-ip-resolve.txt -it $DOCKER_IMAGE
+docker run --name domainmapper_container -v ./domain-ip-resolve.txt:/app/domain-ip-resolve.txt -it domainmapper
 
-# Сообщение для повторного запуска
-echo "Для повторного запуска используйте команду:"
-echo "sudo docker run -d --name $DOCKER_CONTAINER -v $FILE:/app/domain-ip-resolve.txt -it $DOCKER_IMAGE"
-
-# Удаление самого скрипта
+# Удаляем скрипт после выполнения
 echo "Скрипт завершен, удаляю себя..."
 rm -- "$0"
