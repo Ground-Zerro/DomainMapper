@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- Запуск в докере. Запрос [Запрос @andrejs82git, реализация @MrEagle123](https://github.com/Ground-Zerro/DomainMapper/issues/21)
 - Опция в config.ini: не добавлять comment="%SERVICE_NAME%" при сохранении IP-адресов в mikrotik формате. [Запрос @ITNetSystem](https://github.com/Ground-Zerro/DomainMapper/issues/45) 
 - Изменена кодиовка файла результатов на UTF-8 без BOM. [Запрос @Savanture](https://github.com/Ground-Zerro/DomainMapper/issues/54) 
 - [Конвертер маршутов](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities) как отдельная утилита. [Запрос @Andrey999r](https://github.com/Ground-Zerro/DomainMapper/discussions/43) 
@@ -143,6 +144,15 @@ api.openai.com
 arena.openai.com
 ```
 Указание URL вместо доменного имени (например, `ab.chatgpt.com/login` вместо `ab.chatgpt.com`) приведет к ошибке.
+</details>
+
+
+<details>
+  <summary>Запуск в Docker (нажать, чтобы открыть)</summary>
+
+```
+curl -L -s "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/dm-docker.sh" > /tmp/dm-docker.sh && chmod +x /tmp/dm-docker.sh && sh /tmp/dm-docker.sh
+```
 </details>
 
 
