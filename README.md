@@ -48,6 +48,7 @@
 - Twitch
 - Discord
 - Jetbrains
+- Xbox
 - Личный список
 
 </details>
