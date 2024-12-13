@@ -14,7 +14,7 @@ check_docker() {
 # Проверяем и устанавливаем Docker, если его нет
 if ! check_docker; then
     echo "Обновляем список пакетов и устанавливаем необходимые компоненты..."
-    apt update && apt install -y git
+    apt update && apt install -y git curl
 
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh ./get-docker.sh
@@ -33,8 +33,11 @@ fi
 if ! docker image inspect domainmapper >/dev/null 2>&1; then
     echo "Docker образ не найден. Собираем новый образ..."
 
-    echo "Обновляем основную систему..."
-    apt update && apt upgrade -y
+    echo "Устанавливаем только необходимые для работы компоненты..."
+    apt update && apt install -y software-properties-common wget build-essential libssl-dev zlib1g-dev \
+        libbz2-dev libreadline-dev libsqlite3-dev libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev \
+        liblzma-dev tzdata && \
+        rm -rf /var/lib/apt/lists/*
 
     # Создаём Dockerfile с исправлениями
     echo "Создаём Dockerfile..."
@@ -109,5 +112,5 @@ fi
 echo "Контейнер завершил работу. Файл domain-ip-resolve.txt находится в $(pwd)/domain-ip-resolve.txt"
 
 # Удаляем скрипт после выполнения
-echo "Скрипт завершен, удаляю себя..."
+echo "Скрипт завершен."
 rm -- "$0"
