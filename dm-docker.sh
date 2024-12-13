@@ -11,12 +11,11 @@ check_docker() {
     fi
 }
 
-# Обновляем список пакетов и устанавливаем git, если его нет
-echo "Обновляем список пакетов и устанавливаем git..."
-apt update && apt install -y git
-
 # Проверяем и устанавливаем Docker, если его нет
 if ! check_docker; then
+    echo "Обновляем список пакетов и устанавливаем необходимые компоненты..."
+    apt update && apt install -y git
+
     curl -fsSL https://get.docker.com -o get-docker.sh
     sh ./get-docker.sh
     rm get-docker.sh  # Удаляем установочный скрипт после установки
@@ -30,9 +29,16 @@ else
     echo "Репозиторий DomainMapper уже клонирован."
 fi
 
-# Создаём Dockerfile с исправлениями
-echo "Создаём Dockerfile..."
-cat > Dockerfile <<EOL
+# Проверяем наличие Docker образа
+if ! docker image inspect domainmapper >/dev/null 2>&1; then
+    echo "Docker образ не найден. Собираем новый образ..."
+
+    echo "Обновляем основную систему..."
+    apt update && apt upgrade -y
+
+    # Создаём Dockerfile с исправлениями
+    echo "Создаём Dockerfile..."
+    cat > Dockerfile <<EOL
 FROM ubuntu:jammy
 
 # Устанавливаем необходимые пакеты для сборки Python
@@ -70,23 +76,22 @@ RUN if [ -f "requirements.txt" ]; then \
 CMD ["python3.12", "main.py"]
 EOL
 
-# Создаём файл domain-ip-resolve.txt, если его нет
-if [ ! -f "./domain-ip-resolve.txt" ]; then
-    echo "Создаём файл domain-ip-resolve.txt..."
-    touch domain-ip-resolve.txt
-    echo "Файл domain-ip-resolve.txt создан."
-else
-    echo "Файл domain-ip-resolve.txt уже существует."
-fi
+    # Создаём файл domain-ip-resolve.txt, если его нет
+    if [ ! -f "./domain-ip-resolve.txt" ]; then
+        echo "Создаём файл domain-ip-resolve.txt..."
+        touch domain-ip-resolve.txt
+        echo "Файл domain-ip-resolve.txt создан."
+    else
+        echo "Файл domain-ip-resolve.txt уже существует."
+    fi
 
-# Очищаем кеш Docker перед сборкой
-echo "Очищаем кеш Docker..."
-docker system prune -af
-
-# Собираем Docker образ
-if ! docker image inspect domainmapper >/dev/null 2>&1; then
+    # Собираем Docker образ
     echo "Собираем Docker образ..."
     docker build -t domainmapper .
+
+    # Очищаем кеш Docker после сборки
+    echo "Очищаем build cache Docker..."
+    docker builder prune -f
 else
     echo "Docker образ domainmapper уже существует."
 fi
