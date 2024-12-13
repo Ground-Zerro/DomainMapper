@@ -91,14 +91,14 @@ else
     echo "Docker образ domainmapper уже существует."
 fi
 
-# Проверяем наличие контейнера и запускаем его
+# Проверяем наличие контейнера и запускаем main.py из существующего контейнера
 if docker ps -a | grep -q domainmapper_container; then
-    echo "Контейнер уже существует. Перезапускаем его..."
-    docker rm -f domainmapper_container  # Удаляем старый контейнер
+    echo "Контейнер уже существует. Запускаем main.py..."
+    docker start -i domainmapper_container
+else
+    echo "Создаем и запускаем новый контейнер..."
+    docker run --name domainmapper_container -v "$(pwd)/domain-ip-resolve.txt:/app/domain-ip-resolve.txt" -it domainmapper
 fi
-
-echo "Запускаем Docker контейнер..."
-docker run --name domainmapper_container -v "$(pwd)/domain-ip-resolve.txt:/app/domain-ip-resolve.txt" -it domainmapper
 
 # Сообщаем пользователю о местонахождении файла
 echo "Контейнер завершил работу. Файл domain-ip-resolve.txt находится в $(pwd)/domain-ip-resolve.txt"
