@@ -36,9 +36,13 @@ cat > Dockerfile <<EOL
 FROM ubuntu:jammy
 
 # Устанавливаем необходимые пакеты для сборки Python
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y wget build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev && \
+    apt-get install -y wget build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev tzdata && \
     rm -rf /var/lib/apt/lists/*
+
+# Настраиваем временную зону по умолчанию
+RUN ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && dpkg-reconfigure --frontend noninteractive tzdata
 
 # Скачиваем и устанавливаем Python 3.12
 RUN wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
