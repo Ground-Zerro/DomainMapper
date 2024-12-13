@@ -30,14 +30,14 @@ else
     echo "Репозиторий DomainMapper уже клонирован."
 fi
 
-# Создаём Dockerfile с установкой Python 3.12
+# Создаём Dockerfile с исправлениями
 echo "Создаём Dockerfile..."
 cat > Dockerfile <<EOL
 FROM ubuntu:jammy
 
 # Устанавливаем Python 3.12 и необходимые пакеты
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
+    apt-get install -y software-properties-common curl gnupg && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-get update && \
     apt-get install -y python3.12 python3.12-venv python3.12-distutils && \
@@ -49,9 +49,11 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
 WORKDIR /app
 ADD ./DomainMapper /app
 
-# Устанавливаем зависимости проекта
-RUN python3.12 -m pip install --upgrade pip && \
-    python3.12 -m pip install -r requirements.txt
+# Устанавливаем зависимости проекта, если они указаны
+RUN if [ -f "requirements.txt" ]; then \
+        python3.12 -m pip install --upgrade pip && \
+        python3.12 -m pip install -r requirements.txt; \
+    fi
 
 CMD ["python3.12", "main.py"]
 EOL
@@ -65,7 +67,11 @@ else
     echo "Файл domain-ip-resolve.txt уже существует."
 fi
 
-# Собираем Docker образ, если его нет
+# Очищаем кеш Docker перед сборкой
+echo "Очищаем кеш Docker..."
+docker system prune -af
+
+# Собираем Docker образ
 if ! docker image inspect domainmapper >/dev/null 2>&1; then
     echo "Собираем Docker образ..."
     docker build -t domainmapper .
