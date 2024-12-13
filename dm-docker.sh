@@ -35,13 +35,20 @@ echo "Создаём Dockerfile..."
 cat > Dockerfile <<EOL
 FROM ubuntu:jammy
 
-# Устанавливаем Python 3.12 и необходимые пакеты
+# Устанавливаем необходимые пакеты для сборки Python
 RUN apt-get update && \
-    apt-get install -y software-properties-common curl gnupg && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y python3.12 python3.12-venv python3.12-distutils && \
+    apt-get install -y wget build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev && \
     rm -rf /var/lib/apt/lists/*
+
+# Скачиваем и устанавливаем Python 3.12
+RUN wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
+    tar -xvf Python-3.12.0.tgz && \
+    cd Python-3.12.0 && \
+    ./configure --enable-optimizations && \
+    make -j$(nproc) && \
+    make altinstall && \
+    cd .. && \
+    rm -rf Python-3.12.0 Python-3.12.0.tgz
 
 # Устанавливаем pip для Python 3.12
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
