@@ -141,7 +141,7 @@ async def load_urls(url):
 # Загрузка списка платформ из локального файла
 async def load_urls_from_file():
     try:
-        with open('platformdb', 'r') as file:
+        with open('platformdb', 'r', encoding='utf-8') as file:
             urls = {}
             for line in file:
                 if line.strip():
