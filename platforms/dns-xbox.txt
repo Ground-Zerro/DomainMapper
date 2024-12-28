@@ -11,6 +11,7 @@ digicert.com
 gfx.ms
 avatarcloset-pvt.int2.xboxlive.com
 xbox.com
+xboxservices.com
 teal.xboxservices.com
 activeauth.argo.xboxlive.com
 esearch.nonprod.xboxlive.com
