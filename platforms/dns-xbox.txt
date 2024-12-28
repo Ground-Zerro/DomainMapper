@@ -32,7 +32,8 @@ addr.tools
 account.live.com
 titlestorage.xboxlive.com
 microsoftonline.com
-xsts.auth.xboxlive.comber01p.gssv-apxy-prod.xboxlive.com
+xsts.auth.xboxlive.com
+ber01p.gssv-apxy-prod.xboxlive.com
 xlptools.xboxlive.com
 login.live.com
 o.gfx.ms
