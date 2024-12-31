@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Resolver Settings</title>
+    <script>
+        function validateForm(event) {
+            const services = document.querySelectorAll('input[name="services"]:checked');
+            const dnsServers = document.querySelectorAll('input[name="dns_servers"]:checked');
+            const format = document.querySelector('input[name="format"]:checked');
+
+            if (services.length === 0) {
+                alert("Выберите хотя бы один сервис.");
+                event.preventDefault();
+                return false;
+            }
+
+            if (dnsServers.length === 0) {
+                alert("Выберите хотя бы один DNS сервер.");
+                event.preventDefault();
+                return false;
+            }
+
+            if (!format) {
+                alert("Выберите формат сохранения.");
+                event.preventDefault();
+                return false;
+            }
+
+            return true;
+        }
+
+        // Загрузка сервисов из файла и добавление их в форму
+        function loadServices() {
+            const serviceUrl = 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platformdb';
+            
+            fetch(serviceUrl)
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    const servicesContainer = document.getElementById('servicesContainer');
+
+                    lines.forEach(line => {
+                        const parts = line.split(':');
+                        if (parts.length > 1) {
+                            const serviceName = parts[0].trim();
+                            const label = document.createElement('label');
+                            const input = document.createElement('input');
+                            input.type = 'checkbox';
+                            input.name = 'services';
+                            input.value = serviceName;
+                            label.appendChild(input);
+                            label.appendChild(document.createTextNode(` ${serviceName}`));
+                            servicesContainer.appendChild(label);
+                            servicesContainer.appendChild(document.createElement('br'));
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading services:', error));
+        }
+
+        // Загрузка DNS серверов из файла и добавление их в форму
+        function loadDNSServers() {
+            const dnsUrl = 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/dnsdb';
+            
+            fetch(dnsUrl)
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    const dnsServersContainer = document.getElementById('dnsServersContainer');
+
+                    lines.forEach(line => {
+                        const parts = line.split(':');
+                        if (parts.length > 1) {
+                            const dnsServerName = parts[0].trim();
+                            const label = document.createElement('label');
+                            const input = document.createElement('input');
+                            input.type = 'checkbox';
+                            input.name = 'dns_servers';
+                            input.value = dnsServerName;
+                            label.appendChild(input);
+                            label.appendChild(document.createTextNode(` ${dnsServerName}`));
+                            dnsServersContainer.appendChild(label);
+                            dnsServersContainer.appendChild(document.createElement('br'));
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading DNS servers:', error));
+        }
+
+        window.onload = function() {
+            loadServices();
+            loadDNSServers();
+        };
+    </script>
+</head>
+<body>
+    <h2>Настройки</h2>
+    <form action="/run" method="post" enctype="multipart/form-data" onsubmit="validateForm(event)">
+        <label><strong>Список сервисов:</strong></label><br>
+        <div id="servicesContainer"></div><br>
+
+        <label><strong>Список используемых DNS серверов:</strong></label><br>
+        <div id="dnsServersContainer"></div><br>
+
+        <label><strong>Фильтрация Cloudflare:</strong></label><br>
+        <input type="checkbox" name="cloudflare" value="yes"> Исключить Cloudflare<br><br>
+
+        <label><strong>Агрегация подсетей:</strong></label><br>
+        <input type="radio" name="aggregation" value="16"> До /16 (255.255.0.0)<br>
+        <input type="radio" name="aggregation" value="24"> До /24 (255.255.255.0)<br>
+        <input type="radio" name="aggregation" value="mix"> Микс /24 и /32<br>
+        <input type="radio" name="aggregation" value="none" checked> Не агрегировать<br><br>
+
+        <label><strong>Формат сохранения:</strong></label><br>
+        <input type="radio" name="format" value="win"> Windows Route<br>
+        <input type="radio" name="format" value="unix"> Unix Route<br>
+        <input type="radio" name="format" value="cidr" checked> CIDR<br><br>
+
+        <button type="submit">Запустить</button>
+    </form>
+
+    <div id="progress" style="margin-top: 20px; font-weight: bold;">Прогресс выполнения будет отображаться здесь...</div>
+</body>
+</html>
