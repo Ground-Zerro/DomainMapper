@@ -69,7 +69,8 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=$APP_DIR
-ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app
+ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:5000 app:app
+
 
 [Install]
 WantedBy=multi-user.target
