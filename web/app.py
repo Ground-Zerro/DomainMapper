@@ -1,6 +1,8 @@
+import os
 import subprocess
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import uvicorn
 
 # Определение модели для данных запроса
 class RunScriptRequest(BaseModel):
@@ -35,3 +37,8 @@ async def run_script(request: RunScriptRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
+
+# Запуск приложения (для использования с Uvicorn)
+if __name__ == "__main__":
+    # Запуск FastAPI с использованием Uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
