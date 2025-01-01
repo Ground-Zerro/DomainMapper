@@ -122,13 +122,8 @@ nginx -t
 systemctl restart nginx
 
 # Настройка прав доступа к директории приложения
-echo "Настраиваем права доступа для Nginx..."
-chown -R www-data:www-data $APP_DIR
-chmod -R 755 $APP_DIR
-
-# Настраиваем доступ к домашней директории пользователя, если это требуется
-HOME_DIR=$(dirname "$APP_DIR")
-chmod 755 $HOME_DIR
+echo "Настраиваем права доступа..."
+chmod -R 777 $APP_DIR
 
 echo "Права доступа к директории приложения настроены."
 
