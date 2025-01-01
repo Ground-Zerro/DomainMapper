@@ -81,19 +81,27 @@ sudo systemctl enable dns_resolver
 echo "Настраиваем Nginx..."
 sudo rm -f /etc/nginx/sites-enabled/default  # Удаляем стандартный конфиг
 
+# Конфигурация Nginx для работы с FastAPI
 sudo tee $NGINX_CONF > /dev/null <<EOF
 server {
     listen 80;
-    server_name _;
+    server_name $DOMAIN_NAME;
 
-    root $APP_DIR;
-    index index.html;
-
+    # Проксируем запросы на FastAPI сервер
     location / {
-        try_files \$uri /index.html;
+        proxy_pass http://127.0.0.1:8000;  # Uvicorn запускается на порту 8000 через Gunicorn
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
+    # Обработка ошибки 404
     error_page 404 /index.html;
+    location = /index.html {
+        root $APP_DIR;
+        internal;
+    }
 }
 EOF
 
