@@ -1,46 +1,44 @@
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 import os
+import subprocess
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
 
+# Определение модели для данных запроса
+class RunScriptRequest(BaseModel):
+    config: str
+    userId: str
+
+# Инициализация FastAPI приложения
 app = FastAPI()
 
-# РЈРєР°Р·С‹РІР°РµРј РґРёСЂРµРєС‚РѕСЂРёРё РґР»СЏ СЃС‚Р°С‚РёС‡РµСЃРєРёС… С„Р°Р№Р»РѕРІ Рё С€Р°Р±Р»РѕРЅРѕРІ
-templates = Jinja2Templates(directory=os.path.dirname(os.path.realpath(__file__)))
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def get_form(request: Request):
-    # Р—Р°РіСЂСѓР¶Р°РµРј HTML С€Р°Р±Р»РѕРЅ (index.html) Рё РїРµСЂРµРґР°РµРј РІ РЅРµРіРѕ РґР°РЅРЅС‹Рµ
-    return templates.TemplateResponse("index.html", {"request": request})
-
 @app.post("/run")
-async def run_dns_resolver(
-    services: list[str] = Form(...),
-    dns_servers: list[str] = Form(...),
-    cloudflare: str = Form(...),
-    aggregation: str = Form(...),
-    format: str = Form(...),
-    gateway: str = Form(None),
-    commentary: str = Form(None)
-):
-    # Р“РµРЅРµСЂР°С†РёСЏ config.ini
-    config_path = "config.ini"
-    with open(config_path, "w") as config:
-        config.write("[DomainMapper]\n")
-        config.write(f"service={','.join(services)}\n")
-        config.write(f"dnsserver={','.join(dns_servers)}\n")
-        config.write(f"cloudflare={cloudflare}\n")
-        config.write(f"subnet={aggregation}\n")
-        config.write(f"filetype={format}\n")
-        if gateway:
-            config.write(f"gateway={gateway}\n")
-        if commentary:
-            config.write(f"commentary={commentary}\n")
+async def run_script(request: RunScriptRequest):
+    config_content = request.config
+    user_id = request.userId
 
-    # Р—Р°РїСѓСЃРє СЃРєСЂРёРїС‚Р°
-    result_file = "output.txt"
-    os.system(f"python3 main.py -c {config_path}")
+    # Создание имени файла конфигурации
+    config_filename = f"config-id_{user_id}.ini"
+    try:
+        # Запись конфигурации в файл
+        with open(config_filename, 'w') as f:
+            f.write(config_content)
 
-    # Р’РѕР·РІСЂР°С‰Р°РµРј С„Р°Р№Р» СЂРµР·СѓР»СЊС‚Р°С‚Р°
-    return FileResponse(path=result_file, filename="output.txt", media_type="text/plain")
+        # Выполнение команды через subprocess
+        result = subprocess.run(
+            ['python3', 'main.py', '-c', config_filename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        # Возвращение результатов выполнения скрипта
+        return {"stdout": result.stdout, "stderr": result.stderr}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
+
+# Запуск приложения (для использования с Uvicorn)
+if __name__ == "__main__":
+    # Запуск FastAPI с использованием Uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)

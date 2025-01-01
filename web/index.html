@@ -38,7 +38,63 @@
             return true;
         }
 
-        // Загрузка сервисов из файла и добавление их в форму
+        function generateConfig(event) {
+            event.preventDefault();
+
+            if (!validateForm(event)) {
+                return;
+            }
+
+            const services = Array.from(document.querySelectorAll('input[name="services"]:checked')).map(el => el.value).join(',');
+            const dnsServers = Array.from(document.querySelectorAll('input[name="dns_servers"]:checked')).map(el => el.value).join(' ');
+            const format = document.querySelector('input[name="format"]:checked').value;
+            const gateway = document.getElementById('gateway')?.value || '';
+            const commentary = document.getElementById('commentary')?.value || '';
+            const cloudflare = document.querySelector('input[name="cloudflare"]:checked') ? 'yes' : 'no';
+            const aggregation = document.querySelector('input[name="aggregation"]:checked').value;
+
+            const userId = Math.floor(Math.random() * 100000); // Случайный ID пользователя
+            const filename = `out-id_${userId}.txt`;
+
+            const config = `
+[DomainMapper]
+localplatform = no
+localdns = no
+service = ${services}
+dnsserver = ${dnsServers}
+cloudflare = ${cloudflare}
+subnet = ${aggregation}
+filename = ${filename}
+filetype = ${format}
+gateway = ${gateway}
+keenetic = ${gateway}
+listname = ${commentary}
+mk_comment = off
+cfginfo = no
+run =
+`;
+
+            sendConfigToServer(config, userId);
+        }
+
+        function sendConfigToServer(config, userId) {
+            fetch('/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ config: config, userId: userId })
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('progress').innerText = `Конфигурация создана и скрипт запущен. Результат: ${data}`;
+            })
+            .catch(error => {
+                console.error('Ошибка при отправке конфигурации:', error);
+                document.getElementById('progress').innerText = 'Ошибка при выполнении.';
+            });
+        }
+
         function loadServices() {
             const serviceUrl = 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platformdb';
 
@@ -67,7 +123,6 @@
                 .catch(error => console.error('Error loading services:', error));
         }
 
-        // Загрузка DNS серверов из файла и добавление их в форму
         function loadDNSServers() {
             const dnsUrl = 'https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/dnsdb';
 
@@ -96,12 +151,9 @@
                 .catch(error => console.error('Error loading DNS servers:', error));
         }
 
-        // Функция для отображения/скрытия поля ввода IP шлюза
         function toggleGatewayField() {
             const format = document.querySelector('input[name="format"]:checked');
             const gatewayField = document.getElementById('gatewayField');
-
-            // Показываем поле, если выбран формат Unix Route, Windows Route или Keenetic CLI
             if (format && (format.value === 'unix' || format.value === 'win' || format.value === 'keenetic')) {
                 gatewayField.style.display = 'block';
             } else {
@@ -109,12 +161,9 @@
             }
         }
 
-        // Функция для отображения/скрытия поля комментария (для Mikrotik и Keenetic)
         function toggleCommentField() {
             const format = document.querySelector('input[name="format"]:checked');
             const commentField = document.getElementById('commentaryField');
-
-            // Показываем поле, если выбран формат Mikrotik firewall или Keenetic CLI
             if (format && (format.value === 'mikrotik' || format.value === 'keenetic')) {
                 commentField.style.display = 'block';
             } else {
@@ -126,12 +175,10 @@
             loadServices();
             loadDNSServers();
 
-            // Инициализировать отображение полей для шлюза и комментария при загрузке
             toggleGatewayField();
             toggleCommentField();
         };
 
-        // Добавляем слушатель событий для изменения выбора формата
         document.addEventListener('change', function(event) {
             if (event.target.name === 'format') {
                 toggleGatewayField();
@@ -142,7 +189,7 @@
 </head>
 <body>
     <h2>Настройки</h2>
-    <form action="/run" method="post" enctype="multipart/form-data" onsubmit="validateForm(event)">
+    <form id="dnsForm" onsubmit="generateConfig(event)">
         <label><strong>Список сервисов:</strong></label><br>
         <div id="servicesContainer"></div><br>
 
@@ -168,21 +215,19 @@
         <input type="radio" name="format" value="keenetic"> Keenetic CLI (ip route %IP%/32 %gateway% auto !%commentary%)<br>
         <input type="radio" name="format" value="mikrotik"> Mikrotik firewall (/ip/firewall/address-list add list=%commentary% address=%IP%/32)<br><br>
 
-        <!-- Поле для ввода шлюза -->
         <div id="gatewayField" style="display:none;">
             <label><strong>Укажите IP шлюза или имя интерфейса:</strong></label><br>
             <input type="text" id="gateway" name="gateway" placeholder="IP или имя шлюза"><br><br>
         </div>
 
-        <!-- Поле для ввода комментария -->
         <div id="commentaryField" style="display:none;">
             <label><strong>Укажите комментарий для списка:</strong></label><br>
-            <input type="text" id="commentary" name="commentary" placeholder="Комментарий"><br><br>
+            <input type="text" id="commentary" name="commentary" placeholder="Комментарий для списка"><br><br>
         </div>
 
-        <button type="submit">Запустить</button>
+        <button type="submit">Создать конфигурацию</button>
     </form>
 
-    <div id="progress" style="margin-top: 20px; font-weight: bold;">Прогресс выполнения будет отображаться здесь...</div>
+    <div id="progress"></div>
 </body>
 </html>
