@@ -1,15 +1,15 @@
-import os
+п»їimport os
 import subprocess
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-# Определение модели для данных запроса
+# РћРїСЂРµРґРµР»РµРЅРёРµ РјРѕРґРµР»Рё РґР»СЏ РґР°РЅРЅС‹С… Р·Р°РїСЂРѕСЃР°
 class RunScriptRequest(BaseModel):
     config: str
     userId: str
 
-# Инициализация FastAPI приложения
+# РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ FastAPI РїСЂРёР»РѕР¶РµРЅРёСЏ
 app = FastAPI()
 
 @app.post("/run")
@@ -17,14 +17,14 @@ async def run_script(request: RunScriptRequest):
     config_content = request.config
     user_id = request.userId
 
-    # Создание имени файла конфигурации
+    # РЎРѕР·РґР°РЅРёРµ РёРјРµРЅРё С„Р°Р№Р»Р° РєРѕРЅС„РёРіСѓСЂР°С†РёРё
     config_filename = f"config-id_{user_id}.ini"
     try:
-        # Запись конфигурации в файл
+        # Р—Р°РїРёСЃСЊ РєРѕРЅС„РёРіСѓСЂР°С†РёРё РІ С„Р°Р№Р»
         with open(config_filename, 'w') as f:
             f.write(config_content)
 
-        # Выполнение команды через subprocess
+        # Р’С‹РїРѕР»РЅРµРЅРёРµ РєРѕРјР°РЅРґС‹ С‡РµСЂРµР· subprocess
         result = subprocess.run(
             ['python3', 'main.py', '-c', config_filename],
             stdout=subprocess.PIPE,
@@ -32,13 +32,13 @@ async def run_script(request: RunScriptRequest):
             text=True
         )
 
-        # Возвращение результатов выполнения скрипта
+        # Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІС‹РїРѕР»РЅРµРЅРёСЏ СЃРєСЂРёРїС‚Р°
         return {"stdout": result.stdout, "stderr": result.stderr}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"РћС€РёР±РєР°: {str(e)}")
 
-# Запуск приложения (для использования с Uvicorn)
+# Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ (РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЃ Uvicorn)
 if __name__ == "__main__":
-    # Запуск FastAPI с использованием Uvicorn
+    # Р—Р°РїСѓСЃРє FastAPI СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј Uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5000)
