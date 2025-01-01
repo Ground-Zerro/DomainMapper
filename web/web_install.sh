@@ -44,7 +44,7 @@ echo "Устанавливаем зависимости Python..."
 curl -o $APP_DIR/requirements.txt https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt
 
 # Установка зависимостей из requirements.txt и добавление необходимых библиотек
-sudo -u $USERNAME bash -c "source $APP_DIR/venv/bin/activate && pip install -r $APP_DIR/requirements.txt fastapi uvicorn pydantic"
+sudo -u $USERNAME bash -c "source $APP_DIR/venv/bin/activate && pip install -r $APP_DIR/requirements.txt fastapi uvicorn pydantic gunicorn"
 
 # Загрузка файлов приложения
 echo "Загружаем файлы приложения..."
