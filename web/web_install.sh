@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e  # Завершение скрипта при ошибке
+set -u  # Завершение при использовании необъявленных переменных
+
 # Переменные
 USERNAME="test123"
 APP_DIR="/home/$USERNAME/dns_resolver_app"
@@ -13,7 +16,7 @@ if ! id "$USERNAME" &>/dev/null; then
     echo "Пользователь $USERNAME не существует."
     read -p "Хотите создать пользователя? (y/n): " CREATE_USER
     if [[ "$CREATE_USER" =~ ^[Yy]$ ]]; then
-        useradd -m -s /bin/bash "$USERNAME"
+        sudo useradd -m -s /bin/bash "$USERNAME"
         echo "Пользователь $USERNAME успешно создан."
     else
         echo "Скрипт завершён, так как пользователь не существует."
@@ -21,46 +24,69 @@ if ! id "$USERNAME" &>/dev/null; then
     fi
 fi
 
+# Убедиться, что пользователь $USERNAME и www-data имеют общую группу
+sudo usermod -aG www-data "$USERNAME"
+
 # Обновление системы и установка зависимостей
 echo "Обновляем систему и устанавливаем зависимости..."
-apt update && apt upgrade -y
-apt install python3 python3-pip python3-venv gunicorn nginx certbot python3-certbot-nginx -y
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3 python3-pip python3-venv gunicorn nginx certbot python3-certbot-nginx -y
 
 # Создание директории приложения
-echo "Создаем директорию приложения..."
-mkdir -p $APP_DIR
+if [[ ! -d "$APP_DIR" ]]; then
+    echo "Создаем директорию приложения..."
+    sudo mkdir -p "$APP_DIR"
+    sudo chown -R "$USERNAME:www-data" "$APP_DIR"
+    sudo chmod -R 750 "$APP_DIR"
+else
+    echo "Директория приложения уже существует. Пропускаем."
+fi
 
-# Настройка прав доступа
-echo "Настроим права доступа для директории приложения..."
-chown -R $USERNAME:$USERNAME $APP_DIR
-chmod -R 755 $APP_DIR
-
-# Перемещение в директорию приложения
-cd $APP_DIR
-
-# Создание виртуального окружения
-echo "Создаем виртуальное окружение..."
-su - $USERNAME -c "python3 -m venv $APP_DIR/venv"
+# Создание виртуального окружения от имени www-data
+if [[ ! -d "$APP_DIR/venv" ]]; then
+    echo "Создаем виртуальное окружение..."
+    sudo -u www-data python3 -m venv "$APP_DIR/venv"
+    sudo chown -R "$USERNAME:www-data" "$APP_DIR/venv"
+    sudo chmod -R 750 "$APP_DIR/venv"
+else
+    echo "Виртуальное окружение уже существует. Пропускаем."
+fi
 
 # Загрузка файла requirements.txt
-echo "Загружаем файл requirements.txt..."
-curl -o $APP_DIR/requirements.txt https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt
+REQUIREMENTS_URL="https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/requirements.txt"
+if curl --head --fail "$REQUIREMENTS_URL" &>/dev/null; then
+    curl -o "$APP_DIR/requirements.txt" "$REQUIREMENTS_URL"
+    echo "Файл requirements.txt успешно загружен."
+else
+    echo "Ошибка: Файл requirements.txt недоступен."
+    exit 1
+fi
 
-# Установка зависимостей из requirements.txt и добавление необходимых библиотек
+# Установка зависимостей Python от имени www-data
 echo "Устанавливаем зависимости Python..."
-su - $USERNAME -c "source $APP_DIR/venv/bin/activate && pip install -r $APP_DIR/requirements.txt fastapi uvicorn pydantic gunicorn"
+sudo -u www-data bash -c "source $APP_DIR/venv/bin/activate && pip install -r $APP_DIR/requirements.txt fastapi uvicorn pydantic gunicorn"
 
 # Загрузка файлов приложения
-echo "Загружаем файлы приложения..."
-curl -o "$APP_DIR/index.html" -L "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/web/index.html"
-curl -o "$APP_DIR/app.py" -L "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/web/app.py"
-curl -o "$APP_DIR/main.py" -L "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/main.py"
+FILES=("index.html" "app.py" "main.py")
+for FILE in "${FILES[@]}"; do
+    URL="https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/web/$FILE"
+    if curl --head --fail "$URL" &>/dev/null; then
+        curl -o "$APP_DIR/$FILE" "$URL"
+        echo "Файл $FILE успешно загружен."
+        sudo chown "$USERNAME:www-data" "$APP_DIR/$FILE"
+        sudo chmod 640 "$APP_DIR/$FILE"
+    else
+        echo "Ошибка: Файл $FILE недоступен."
+    fi
+done
 
-chown "$USERNAME":"$USERNAME" "$APP_DIR/main.py"
+# Проверка прав доступа
+sudo chown -R "$USERNAME:www-data" "$APP_DIR"
+sudo chmod -R 750 "$APP_DIR"
 
 # Создание системного сервиса
 echo "Создаем системный сервис..."
-tee $SERVICE_FILE > /dev/null <<EOF
+sudo bash -c "cat <<EOF > $SERVICE_FILE
 [Unit]
 Description=DNS Resolver Web App
 After=network.target
@@ -71,37 +97,30 @@ Group=www-data
 WorkingDirectory=$APP_DIR
 ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:5000 app:app
 
-
 [Install]
 WantedBy=multi-user.target
-EOF
+EOF"
 
-# Активация и запуск сервиса
-echo "Активируем и запускаем сервис..."
-systemctl daemon-reload
-systemctl start dns_resolver
-systemctl enable dns_resolver
+sudo systemctl daemon-reload
+sudo systemctl enable --now dns_resolver
 
 # Настройка Nginx
-echo "Настраиваем Nginx..."
-rm -f /etc/nginx/sites-enabled/default  # Удаляем стандартный конфиг
-
-tee $NGINX_CONF > /dev/null <<EOF
+if [[ ! -f "$NGINX_CONF" ]]; then
+    echo "Настраиваем Nginx..."
+    sudo bash -c "cat <<EOF > $NGINX_CONF
 server {
     listen 80;
-    server_name _;
+    server_name $DOMAIN_NAME;
 
     root $APP_DIR;
     index index.html;
 
-    # Статические файлы
     location / {
         try_files \$uri /index.html;
     }
 
-    # Прокси для FastAPI
     location /run {
-        proxy_pass http://127.0.0.1:5000;  # Прокси на сервер FastAPI, если он работает на localhost и порту 5000
+        proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -110,33 +129,16 @@ server {
 
     error_page 404 /index.html;
 }
-EOF
+EOF"
 
-# Создаем символическую ссылку для конфигурации
-ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
+    sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
+    sudo nginx -t && sudo systemctl restart nginx
+else
+    echo "Конфигурация Nginx уже существует. Пропускаем."
+fi
 
-# Проверяем конфигурацию Nginx
-nginx -t
+# Настройка HTTPS
+echo "Настраиваем HTTPS..."
+sudo certbot --nginx -n --agree-tos --email "$EMAIL_ADR" -d "$DOMAIN_NAME"
 
-# Перезапускаем Nginx
-systemctl restart nginx
-
-# Настройка прав доступа к директории приложения
-echo "Настраиваем права доступа..."
-chmod -R 777 $APP_DIR
-
-echo "Права доступа к директории приложения настроены."
-
-# Открытие портов для Nginx
-echo "Открываем порты для Nginx..."
-ufw allow 'Nginx Full'
-ufw reload
-
-echo "Конфигурация Nginx завершена."
-
-# Настройка HTTPS с помощью Certbot
-echo "Настроим HTTPS с помощью Certbot..."
-certbot --nginx -n --agree-tos --email $EMAIL_ADR -d $DOMAIN_NAME
-
-# Завершение
-echo "Настройка завершена. Приложение доступно по адресу $DOMAIN_NAME"
+echo "Скрипт выполнен успешно. Приложение доступно по адресу https://$DOMAIN_NAME"
