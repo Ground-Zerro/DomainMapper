@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- Добавлены списки от [ITDog](https://t.me/itdoginfo/36).
 - Добавлен сервис xBox. Запрос @Deni5c
 - Запуск в докере. Запрос [Запрос @andrejs82git](https://github.com/Ground-Zerro/DomainMapper/issues/21), [Реализация @MrEagle123](https://github.com/Ground-Zerro/DomainMapper/issues/21#issuecomment-2509565392)
 - Опция в config.ini: не добавлять comment="%SERVICE_NAME%" при сохранении IP-адресов в mikrotik формате. [Запрос @ITNetSystem](https://github.com/Ground-Zerro/DomainMapper/issues/45) 
@@ -32,6 +33,8 @@
   <summary>Поддерживаемые сервисы (нажать, чтобы открыть)</summary>
 
 - [Antifilter - community edition](https://community.antifilter.download/)
+- [ITDog Inside](https://github.com/itdoginfo/allow-domains)
+- [ITDog Outside](https://github.com/itdoginfo/allow-domains)
 - Youtube
 - Facebook
 - Openai

@@ -1,4 +1,6 @@
 Antifilter community edition: https://community.antifilter.download/list/domains.lst
+ITDog Inside: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst
+ITDog Outside: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/outside-raw.lst
 Youtube: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-youtube.txt
 Facebook: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-facebook.txt
 Openai: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-openai.txt
