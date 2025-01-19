@@ -46,7 +46,7 @@
 - Adobe
 - Apple
 - Google
-- Torrent Truckers
+- Torrent Trackers
 - Search engines
 - [Github сopilot](https://github.com/features/copilot)
 - Twitch
