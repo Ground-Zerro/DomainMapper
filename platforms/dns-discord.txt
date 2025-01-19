@@ -89,6 +89,7 @@ atlanta9825.discord.gg
 atlanta9866.discord.gg
 atlanta9922.discord.gg
 atlanta9978.discord.gg
+blakinola.discord.gg
 brazil1084.discord.gg
 brazil11000.discord.gg
 brazil11001.discord.gg
@@ -529,8 +530,6 @@ dl-game-sdk.discordapp.net
 dl-ptb.discordapp.net
 dl-sdk.discordapp.net
 dl.discordapp.net
-findAdiscord.com
-dyno.gg
 dubai1217.discord.gg
 dubai2333.discord.gg
 dubai2709.discord.gg
@@ -542,6 +541,8 @@ dubai6771.discord.gg
 dubai6910.discord.gg
 dubai6962.discord.gg
 dubai949.discord.gg
+dyno.gg
+findAdiscord.com
 finland10000.discord.gg
 finland10001.discord.gg
 finland10002.discord.gg
@@ -954,14 +955,8 @@ frankfurt9654.discord.gg
 frankfurt9728.discord.gg
 frankfurt9970.discord.gg
 frankfurt9985.discord.gg
-gateway.discord.gg
-gateway-canary.discord.gg
 gateway-cf.discord.gg
 gateway.discord.gg
-kiandy.discord.gg
-lanfest.discord.gg
-promos.discord.gg
-remote-auth-gateway.discord.gg
 hongkong11000.discord.gg
 hongkong11001.discord.gg
 hongkong11003.discord.gg
@@ -1567,6 +1562,8 @@ japan9887.discord.gg
 japan9931.discord.gg
 japan9932.discord.gg
 japan9946.discord.gg
+kiandy.discord.gg
+lanfest.discord.gg
 latency.discord.media
 madrid10000.discord.gg
 madrid10001.discord.gg
@@ -1964,6 +1961,8 @@ newark9858.discord.gg
 newark9866.discord.gg
 newark9960.discord.gg
 newark9985.discord.gg
+promos.discord.gg
+remote-auth-gateway.discord.gg
 rotterdam1032.discord.gg
 rotterdam1060.discord.gg
 rotterdam1069.discord.gg
@@ -4115,6 +4114,5 @@ warsaw10156.discord.gg
 warsaw10157.discord.gg
 warsaw10158.discord.gg
 www.discord.com
-www.discordapp.com
 www.discord.gg
-discordapp.com
+www.discordapp.com
