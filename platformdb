@@ -1,21 +1,21 @@
 Antifilter community edition: https://community.antifilter.download/list/domains.lst
 ITDog Inside: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-raw.lst
 ITDog Outside: https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/outside-raw.lst
-Youtube: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-youtube.txt
-Facebook: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-facebook.txt
-Openai: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-openai.txt
-Tik-Tok: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-tiktok.txt
-Instagram: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-instagram.txt
-Twitter: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-twitter.txt
-Netflix: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-netflix.txt
-Bing: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-bing.txt
-Adobe: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-adobe.txt
-Apple: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-apple.txt
-Google: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-google.txt
+Youtube: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-youtube.txt
+Facebook: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-facebook.txt
+Openai: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-openai.txt
+Tik-Tok: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-tiktok.txt
+Instagram: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-instagram.txt
+Twitter: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-twitter.txt
+Netflix: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-netflix.txt
+Bing: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-bing.txt
+Adobe: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-adobe.txt
+Apple: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-apple.txt
+Google: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-google.txt
 Torrent Trackers: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-ttrackers.txt
-Search engines: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines.txt
+Search engines: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-search-engines.txt
 Github Copilot: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-github-pilot.txt
-Twitch: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-twitch.txt
+Twitch: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-twitch.txt
 Discord: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-discord.txt
 Jetbrains: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-jetbrains.txt
 Xbox: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-xbox.txt
