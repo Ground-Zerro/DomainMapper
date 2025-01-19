@@ -12,7 +12,7 @@ Bing: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms
 Adobe: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-adobe.txt
 Apple: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-apple.txt
 Google: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-google.txt
-Torrent Trackers: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-ttrackers.txt
+Torrent Trackers: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-ttrackers.txt
 Search engines: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-search-engines.txt
 Github Copilot: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/platforms/dns-github-pilot.txt
 Twitch: https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platforms/dns-twitch.txt
