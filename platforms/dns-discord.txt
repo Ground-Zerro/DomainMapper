@@ -955,6 +955,13 @@ frankfurt9728.discord.gg
 frankfurt9970.discord.gg
 frankfurt9985.discord.gg
 gateway.discord.gg
+gateway-canary.discord.gg
+gateway-cf.discord.gg
+gateway.discord.gg
+kiandy.discord.gg
+lanfest.discord.gg
+promos.discord.gg
+remote-auth-gateway.discord.gg
 hongkong11000.discord.gg
 hongkong11001.discord.gg
 hongkong11003.discord.gg
@@ -4109,4 +4116,5 @@ warsaw10157.discord.gg
 warsaw10158.discord.gg
 www.discord.com
 www.discordapp.com
+www.discord.gg
 discordapp.com
