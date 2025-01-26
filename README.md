@@ -53,6 +53,7 @@
 - Discord
 - Jetbrains
 - Xbox
+- Telegram
 - Личный список
 
 </details>
