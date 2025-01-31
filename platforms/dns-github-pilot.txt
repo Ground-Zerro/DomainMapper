@@ -1,7 +1,3 @@
 copilot-telemetry.githubusercontent.com
 copilot-proxy.githubusercontent.com
 githubcopilot.com
-github.com
-api.github.com
-default.exp-tas.com
-origin-tracker.githubusercontent.com
