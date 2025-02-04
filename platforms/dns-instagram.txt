@@ -22,6 +22,7 @@ d.ns.instagram.com
 dyi.www.instagram.com
 edge-mqtt-fallback.facebook.com
 edge-mqtt.facebook.com
+edge-chat.instagram.com
 engineering.instagram.com
 fna-instagram-shv-01-fagc1.fbcdn.net
 fna-instagram-shv-01-fdel1.fbcdn.net
