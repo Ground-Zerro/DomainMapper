@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- Доабвлены некоторые [оналйн кинотеатры](https://github.com/Ground-Zerro/DomainMapper/blob/main/platforms/dns-onlinetheater.txt). Запрос @Andrey_schumacher
 - Добавлены списки от [ITDog](https://t.me/itdoginfo/36).
 - Добавлен сервис xBox. Запрос @Deni5c
 - Запуск в докере. Запрос [Запрос @andrejs82git](https://github.com/Ground-Zerro/DomainMapper/issues/21), [Реализация @MrEagle123](https://github.com/Ground-Zerro/DomainMapper/issues/21#issuecomment-2509565392)
