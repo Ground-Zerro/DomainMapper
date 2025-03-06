@@ -5,3 +5,9 @@ github.com
 api.github.com
 default.exp-tas.com
 origin-tracker.githubusercontent.com
+copilot.github.com
+breeze.aimon.applicationinsights.io
+api.githubcopilot.com
+api.individual.githubcopilot.com
+proxy.individual.githubusercontent.com
+telemetry.individual.githubcopilot.com
