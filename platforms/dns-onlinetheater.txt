@@ -65,6 +65,9 @@ limbo.stream.voidboost.cc
 lipsium.stream.voidboost.cc
 lostfilm.tv
 lostfilm.win
+static.lostfilm.top
+lostfilm.download
+www.lostfilm.download
 louvre.stream.voidboost.cc
 lutetium.stream.voidboost.cc
 lynx.stream.voidboost.cc
