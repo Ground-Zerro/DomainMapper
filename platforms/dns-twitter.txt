@@ -51,3 +51,4 @@ ton.twitter.com
 x.com
 abs.twimg.com
 abs-0.twimg.com
+pscp.tv
