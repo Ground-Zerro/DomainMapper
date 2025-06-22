@@ -24,8 +24,6 @@ cub.red
 delta.stream.voidboost.cc
 developer.themoviedb.org
 developers.themoviedb.org
-dorama.live
-doramalive.ru
 doramy.club
 druid.stream.voidboost.cc
 eclipse.stream.voidboost.cc
@@ -36,7 +34,9 @@ falcon.stream.voidboost.cc
 fiber.stream.voidboost.cc
 files.themoviedb.org
 files.tmdb.org
+filmix.ag
 filmix.biz
+filmix.date
 filmix.fm
 filmix.me
 flerovium.stream.voidboost.cc
@@ -63,11 +63,9 @@ kurt.stream.voidboost.cc
 lacerta.stream.voidboost.cc
 limbo.stream.voidboost.cc
 lipsium.stream.voidboost.cc
+lostfilm.download
 lostfilm.tv
 lostfilm.win
-static.lostfilm.top
-lostfilm.download
-www.lostfilm.download
 louvre.stream.voidboost.cc
 lutetium.stream.voidboost.cc
 lynx.stream.voidboost.cc
@@ -121,6 +119,7 @@ st.kinobase.org
 st.kinovod.net
 static.hdrezka.ac
 static.hdrezka.ag
+static.lostfilm.top
 static.voidboost.com
 statichdrezka.ac
 status.themoviedb.org
@@ -139,9 +138,8 @@ vespene.stream.voidboost.cc
 viking.stream.voidboost.in
 web01.stream.voidboost.cc
 web02.stream.voidboost.cc
-www.dorama.live
-www.doramalive.ru
 www.doramy.club
+www.filmix.ag
 www.filmix.biz
 www.filmix.fm
 www.filmix.me
@@ -152,6 +150,7 @@ www.kinoplay.app
 www.kinovod.net
 www.kinozal.me
 www.kinozal.tv
+www.lostfilm.download
 www.lostfilm.tv
 www.lostfilm.win
 www.m.filmix.me
