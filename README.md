@@ -2,6 +2,7 @@
 <details>
   <summary>Что нового (нажать, чтобы открыть)</summary>
 
+- Keenetic BAT формат сохранения. Небольшие изменения в интерфейсе. Некоторые доработки/улучшения.
 - Доабвлены некоторые [оналйн кинотеатры](https://github.com/Ground-Zerro/DomainMapper/blob/main/platforms/dns-onlinetheater.txt). Запрос @Andrey_schumacher
 - Добавлены списки от [ITDog](https://t.me/itdoginfo/36).
 - Добавлен сервис xBox. Запрос @Deni5c
@@ -64,7 +65,7 @@
 - Преобразование доменных имен популярных сервисов в IP-адреса.
 - Агрегация маршрутов в /16 (255.255.0.0) и /24 (255.255.255.0) подсети. Комбинированный режим /24 + /32.
 - Фильтрация IP-адресов Cloudflare (опционально).
-- Восемь вариантов сохранения результатов.
+- Множество форматов сохранения результата.
 
 
 **Ключевые особенности**
@@ -164,13 +165,14 @@ curl -L -s "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/hea
 
 
 <details>
-  <summary>Для пользователей Windows, не знающих "как", но кому "очень нужно" (нажать, чтобы открыть)</summary>
+  <summary>Для пользователей Windows (нажать, чтобы открыть)</summary>
 
 - Загляните в директорию [Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/Windows) репозитория.
 </details>
 
 
-##### Протестировано в Ubuntu 20.04, macOS Sonoma и Windows 10/11
+# ☕ Поддержка
 
-## ВАЖНО:
-Использование сделанных "кем-то", а не Вами лично IP-листов и готовых файлов марштутов - **плохая идея** [ЖМИ](https://github.com/Ground-Zerro/DomainMapper/discussions/50)
+Если проект оказался Вам полезен — можно поддержать автора:
+
+- [Поддержать на Boosty](https://boosty.to/ground_zerro)
