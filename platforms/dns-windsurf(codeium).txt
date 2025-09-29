@@ -1,0 +1,7 @@
+windsurf.com
+codeium.com
+server.codeium.com
+web-backend.codeium.com
+unleash.codeium.com
+inference.codeium.com
+codeiumdata.com
