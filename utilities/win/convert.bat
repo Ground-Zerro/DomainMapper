@@ -96,4 +96,3 @@ endlocal
 echo файл скопирован в %UserProfile%\Desktop\ip.txt
 pause
 exit /b 0
-
