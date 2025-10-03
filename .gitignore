@@ -123,3 +123,5 @@ custom-dns-list.txt
 # Platform and DNS databases
 platformdb
 dnsdb
+
+.gitattributes
