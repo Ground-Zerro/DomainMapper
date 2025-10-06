@@ -94,4 +94,3 @@ endlocal
 echo файл скопирован в %UserProfile%\Desktop\domain-ip-resolve.txt
 pause
 exit /b 0
-
