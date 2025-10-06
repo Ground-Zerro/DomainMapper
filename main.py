@@ -149,7 +149,7 @@ async def load_urls_from_file() -> Dict[str, str]:
                     urls[service.strip()] = url.strip()
             return urls
     except Exception as e:
-        print(f"\n{red('Локальный список сервсиов не найден - загружаем из сети.')}")
+        print(f"\n{red('Локальный список сервисов не найден - загружаем из сети.')}")
         urls = await load_urls(platform_db_url)
         return urls
 
