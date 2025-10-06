@@ -180,7 +180,7 @@ async def load_dns_from_file() -> Dict[str, List[str]]:
                     dns_servers[service.strip()] = servers.strip().split()
             return dns_servers
     except Exception as e:
-        print(f"{red('\nЛокальный список DNS серверов не найден - загружаем из сети.')}")
+        print(f"\n{red('Локальный список DNS серверов не найден - загружаем из сети.')}")
         dns_servers = await load_dns_servers(dns_db_url)
         return dns_servers
 
