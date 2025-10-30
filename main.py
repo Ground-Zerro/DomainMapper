@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import configparser
 import ipaddress
+import netaddr
 import os
 from asyncio import Semaphore
 from collections import defaultdict
@@ -404,6 +405,7 @@ def subnet_input(subnet):
             f"\n1. сократить до {green('/16')} (255.255.0.0)"
             f"\n2. сократить до {green('/24')} (255.255.255.0)"
             f"\n3. сократить до {green('/24')} + {green('/32')} (255.255.255.0 и 255.255.255.255)"
+            f"\n4. сократить до {green('/24')} + {green('/32')} (255.255.255.0 и 255.255.255.255) и совместить до максимально возможного"
             f"\n{green('Enter')} - пропустить"
             f"\nВаш выбор: "
         ).strip()
@@ -414,10 +416,12 @@ def subnet_input(subnet):
             subnet = '24'
         elif choice == '3':
             subnet = 'mix'
+        elif choice == '4':
+            subnet = 'netaddr'
         else:
             subnet = '32'
 
-    return subnet if subnet in {'16', '24', 'mix'} else '32'
+    return subnet if subnet in {'16', '24', 'mix', 'netaddr'} else '32'
 
 def group_ips_in_subnets_optimized(filename: str, subnet: str):
     try:
@@ -455,8 +459,20 @@ def group_ips_in_subnets_optimized(filename: str, subnet: str):
                     subnets.add(key + '.0')
                 else:
                     subnets.update(group)
-            
             print(f"{Style.BRIGHT}IP-адреса агрегированы до масок /24 и /32{Style.RESET_ALL}")
+
+        elif subnet == "netaddr":
+            octet_groups = defaultdict(list)
+            for ip in ips:
+                key = '.'.join(ip.split('.')[:3])
+                octet_groups[key].append(ip)
+
+            for key, group in octet_groups.items():
+                if len(group) > 1:
+                    subnets.add(key + '.0')
+                else:
+                    subnets.update(group)
+            print(f"{Style.BRIGHT}IP-адреса агрегированы до максимально возможных подсетей{Style.RESET_ALL}")
 
         with open(filename, 'w', encoding='utf-8') as file:
             for subnet_ip in sorted(subnets, key=lambda x: ipaddress.IPv4Address(x.split('/')[0])):
@@ -474,15 +490,34 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             print(f"Ошибка чтения файла: {e}")
             return None
 
-    def write_file(filename, ips, formatter):
-        formatted_ips = [formatter(ip.strip()) for ip in ips]
-        with open(filename, 'w', encoding='utf-8') as file:
-            if filetype.lower() == 'wireguard':
-                file.write(', '.join(formatted_ips))
-            else:
-                file.write('\n'.join(formatted_ips))
+    def write_file(filename, ips, formatter, subnet, merged_list):
+        if subnet == "netaddr":
+            formatted_ips = [formatter(ip) for ip in range(len(merged_list))]
+            with open(filename, 'w', encoding='utf-8') as file:
+                if filetype.lower() == 'wireguard':
+                    file.write(', '.join(formatted_ips))
+                else:
+                    file.write('\n'.join(formatted_ips))
+        else:
+            formatted_ips = [formatter(ip.strip()) for ip in ips]
+            with open(filename, 'w', encoding='utf-8') as file:
+                if filetype.lower() == 'wireguard':
+                    file.write(', '.join(formatted_ips))
+                else:
+                    file.write('\n'.join(formatted_ips))
 
-    net_mask = subnet if subnet == "mix" else "255.255.0.0" if subnet == "16" else "255.255.255.0" if subnet == "24" else "255.255.255.255"
+    #net_mask = subnet if subnet == ("mix" | "netaddr") else "255.255.0.0" if subnet == "16" else "255.255.255.0" if subnet == "24" else "255.255.255.255"
+    
+    if subnet == "mix":
+        net_mask = subnet
+    elif subnet == "netaddr":
+        net_mask = subnet
+    elif subnet == "255.255.255.0":
+        net_mask = "255.255.255.0"
+    elif subnet == "255.255.0.0":
+        net_mask = "255.255.0.0"
+    else:
+        net_mask = "255.255.255.255"
 
     if not filetype:
         user_input = input(f"""
@@ -550,9 +585,37 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}' + (f' comment="{comment(selected_service)}"' if mk_comment != "off" else "") + f' address={mix_formatter(ip)}',
             'wireguard': lambda ip: f"{mix_formatter(ip)}"
         })
+    
+    if subnet == "netaddr":
+        list = []
+        for ip in ips:
+            if ip.endswith('.0\n'):
+                list.append(f"{ip.strip()}/24")
+            else:
+                list.append(f"{ip.strip()}/32")
+        merged_list = netaddr.cidr_merge(list)
+
+        if filetype in ['win', 'keenetic bat']:
+            netaddr_formatter = lambda ip: f"{merged_list[ip].ip} mask {merged_list[ip].netmask}"
+        elif filetype.lower() == 'ovpn':
+            netaddr_formatter = lambda ip: f"{merged_list[ip].ip} {merged_list[ip].netmask}"
+        else:
+            netaddr_formatter = lambda ip: f"{merged_list[ip].cidr}"
+
+        formatters.update({
+            'win': lambda ip: f"route add {netaddr_formatter(ip)} {gateway}",
+            'unix': lambda ip: f"ip route {netaddr_formatter(ip)} {gateway}",
+            'keenetic bat': lambda ip: f"route add {netaddr_formatter(ip)} 0.0.0.0",
+            'keenetic cli': lambda ip: f"ip route {netaddr_formatter(ip)} {ken_gateway} auto !{comment(selected_service)}",
+            'cidr': lambda ip: f"{netaddr_formatter(ip)}",
+            'ovpn': lambda ip: f'push "route {netaddr_formatter(ip)}"',
+            'mikrotik': lambda ip: f'/ip/firewall/address-list add list={mk_list_name}' + (f' comment="{comment(selected_service)}"' if mk_comment != "off" else "") + f' address={netaddr_formatter(ip)}',
+            'wireguard': lambda ip: f"{netaddr_formatter(ip)}"
+        })
+
 
     if filetype.lower() in formatters:
-        write_file(filename, ips, formatters[filetype.lower()])
+        write_file(filename, ips, formatters[filetype.lower()], subnet, merged_list)
 
 async def main():
     parser = argparse.ArgumentParser(description="DNS resolver script with custom config file.")
