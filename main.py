@@ -472,7 +472,7 @@ def group_ips_in_subnets_optimized(filename: str, subnet: str):
                     subnets.add(key + '.0')
                 else:
                     subnets.update(group)
-            print(f"{Style.BRIGHT}IP-адреса агрегированы до максимально возможных подсетей{Style.RESET_ALL}")
+            print(f"{Style.BRIGHT}IP-адреса агрегированы до максимально возможного размера масок{Style.RESET_ALL}")
 
         with open(filename, 'w', encoding='utf-8') as file:
             for subnet_ip in sorted(subnets, key=lambda x: ipaddress.IPv4Address(x.split('/')[0])):
