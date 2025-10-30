@@ -506,18 +506,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
                 else:
                     file.write('\n'.join(formatted_ips))
 
-    #net_mask = subnet if subnet == ("mix" | "netaddr") else "255.255.0.0" if subnet == "16" else "255.255.255.0" if subnet == "24" else "255.255.255.255"
-    
-    if subnet == "mix":
-        net_mask = subnet
-    elif subnet == "netaddr":
-        net_mask = subnet
-    elif subnet == "255.255.255.0":
-        net_mask = "255.255.255.0"
-    elif subnet == "255.255.0.0":
-        net_mask = "255.255.0.0"
-    else:
-        net_mask = "255.255.255.255"
+    net_mask = subnet if subnet == "netaddr" or "mix" else "255.255.0.0" if subnet == "16" else "255.255.255.0" if subnet == "24" else "255.255.255.255"
 
     if not filetype:
         user_input = input(f"""
@@ -615,7 +604,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
 
     if filetype.lower() in formatters:
-        write_file(filename, ips, formatters[filetype.lower()], subnet, merged_list)
+        write_file(filename, ips, formatters[filetype.lower()], subnet, merged_list="")
 
 async def main():
     parser = argparse.ArgumentParser(description="DNS resolver script with custom config file.")
