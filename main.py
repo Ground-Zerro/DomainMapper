@@ -490,9 +490,9 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
             print(f"Ошибка чтения файла: {e}")
             return None
 
-    def write_file(filename, ips, formatter, subnet, merged_list):
+    def write_file(filename, ips, formatter, subnet):
         if subnet == "netaddr":
-            formatted_ips = [formatter(ip) for ip in range(len(merged_list))]
+            formatted_ips = [formatter(ip) for ip in range(len(ips))]
             with open(filename, 'w', encoding='utf-8') as file:
                 if filetype.lower() == 'wireguard':
                     file.write(', '.join(formatted_ips))
@@ -582,14 +582,14 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
                 list.append(f"{ip.strip()}/24")
             else:
                 list.append(f"{ip.strip()}/32")
-        merged_list = netaddr.cidr_merge(list)
+        ips = netaddr.cidr_merge(list)
 
         if filetype in ['win', 'keenetic bat']:
-            netaddr_formatter = lambda ip: f"{merged_list[ip].ip} mask {merged_list[ip].netmask}"
+            netaddr_formatter = lambda ip: f"{ips[ip].ip} mask {ips[ip].netmask}"
         elif filetype.lower() == 'ovpn':
-            netaddr_formatter = lambda ip: f"{merged_list[ip].ip} {merged_list[ip].netmask}"
+            netaddr_formatter = lambda ip: f"{ips[ip].ip} {ips[ip].netmask}"
         else:
-            netaddr_formatter = lambda ip: f"{merged_list[ip].cidr}"
+            netaddr_formatter = lambda ip: f"{ips[ip].cidr}"
 
         formatters.update({
             'win': lambda ip: f"route add {netaddr_formatter(ip)} {gateway}",
@@ -604,7 +604,7 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
 
 
     if filetype.lower() in formatters:
-        write_file(filename, ips, formatters[filetype.lower()], subnet, merged_list="")
+        write_file(filename, ips, formatters[filetype.lower()], subnet)
 
 async def main():
     parser = argparse.ArgumentParser(description="DNS resolver script with custom config file.")
