@@ -3,15 +3,128 @@ import asyncio
 import configparser
 import ipaddress
 import os
-from asyncio import Semaphore
-from collections import defaultdict
+import time
+from collections import defaultdict, deque
 from typing import Dict, List, Set, Tuple, Optional
 
 import dns.asyncresolver
 import httpx
 from colorama import Fore, Style, init
+from tqdm import tqdm
 
 init(autoreset=True)
+
+class ProgressTracker:
+    def __init__(self, total: int, stats: Dict, unique_ips_set: Set[str],
+                 num_dns_servers: int = 1, rate_limit: int = 10, domains_count: int = 0):
+        self.total = total
+        self.stats = stats
+        self.unique_ips = unique_ips_set
+        self.pbar = None
+        self.lock = asyncio.Lock()
+        self.num_dns_servers = num_dns_servers
+        self.rate_limit = rate_limit
+        self.domains_count = domains_count
+        self.effective_rate = num_dns_servers * rate_limit
+        self.start_time = time.time()
+    
+    def start(self):
+        self.pbar = tqdm(
+            total=self.total,
+            bar_format='[{bar:40}] {percentage:3.1f}% | Прошло: {elapsed} | Осталось (примерно): {desc}',
+            unit=' запр',
+            ncols=120,
+            leave=True,
+            mininterval=0,
+            desc='расчет...'
+        )
+
+    async def update_progress(self):
+        if self.pbar:
+            async with self.lock:
+                processed = self.stats.get('total_domains_processed', 0)
+                remaining_time = self.calculate_remaining_time()
+
+                self.pbar.n = processed
+                self.pbar.set_description_str(remaining_time)
+                self.pbar.refresh()
+
+    def format_time(self, seconds: float) -> str:
+        if seconds < 0:
+            seconds = 0
+        mins = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{mins:02d}:{secs:02d}"
+
+    def calculate_remaining_time(self) -> str:
+        processed = self.stats.get('total_domains_processed', 0)
+        remaining = self.total - processed
+
+        if self.effective_rate > 0:
+            time_remaining = remaining / self.effective_rate
+            return self.format_time(time_remaining)
+        return "00:00"
+
+    def close(self):
+        if self.pbar:
+            self.pbar.n = self.total
+            self.pbar.refresh()
+            self.pbar.close()
+
+        elapsed = time.time() - self.stats['start_time']
+        total = self.stats['total_domains']
+        processed = self.stats['total_domains_processed']
+        errors = self.stats['domain_errors']
+
+        error_pct = (errors / total * 100) if total > 0 else 0
+        total_ips_found = len(self.unique_ips) + self.stats['null_ips_count'] + self.stats.get('cloudflare_ips_count', 0)
+        null_pct = (self.stats['null_ips_count'] / total_ips_found * 100) if total_ips_found > 0 else 0
+        cf_pct = (self.stats.get('cloudflare_ips_count', 0) / total_ips_found * 100) if total_ips_found > 0 else 0
+
+        print(f"\n{yellow('Проверка завершена.')}")
+        print(f"{Style.BRIGHT}Всего обработано DNS имен:{Style.RESET_ALL} {processed} из {total}")
+        print(f"{Style.BRIGHT}Разрешено уникальных IP-адресов:{Style.RESET_ALL} {len(self.unique_ips)}")
+        print(f"{Style.BRIGHT}Ошибок разрешения доменов:{Style.RESET_ALL} {errors} ({error_pct:.1f}%)")
+
+        if self.stats['null_ips_count'] > 0:
+            print(f"{Style.BRIGHT}Исключено IP-адресов 'заглушек':{Style.RESET_ALL} {self.stats['null_ips_count']} ({null_pct:.1f}%)")
+
+        if self.stats.get('cloudflare_ips_count', 0) > 0:
+            print(f"{Style.BRIGHT}Исключено IP-адресов Cloudflare:{Style.RESET_ALL} {self.stats['cloudflare_ips_count']} ({cf_pct:.1f}%)")
+
+class PeriodicProgressUpdater:
+    def __init__(self, progress_tracker: ProgressTracker, stats: Dict):
+        self.progress_tracker = progress_tracker
+        self.stats = stats
+        self.is_running = False
+        self.task = None
+
+    async def start(self):
+        if not self.is_running:
+            self.is_running = True
+            self.task = asyncio.create_task(self._periodic_update())
+
+    async def stop(self):
+        if self.is_running:
+            self.is_running = False
+            if self.task:
+                self.task.cancel()
+                try:
+                    await self.task
+                except asyncio.CancelledError:
+                    pass
+
+    async def _periodic_update(self):
+        await asyncio.sleep(2)
+        while self.is_running:
+            try:
+                await self.progress_tracker.update_progress()
+                await asyncio.sleep(2)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"Error in periodic progress update: {e}")
+                await asyncio.sleep(2)
 
 def yellow(text):
     return f"{Fore.YELLOW}{text}{Style.RESET_ALL}"
@@ -60,7 +173,7 @@ def read_config(cfg_file):
             config = config['DomainMapper']
         
         service = config.get('service') or ''
-        request_limit = int(config.get('threads') or 15)
+        rate_limit = int(config.get('rate_limit') or 50)
         filename = config.get('filename') or 'domain-ip-resolve.txt'
         cloudflare = config.get('cloudflare') or ''
         filetype = config.get('filetype') or ''
@@ -79,7 +192,7 @@ def read_config(cfg_file):
             print(f"{yellow(f'Загружена конфигурация из {cfg_file}:')}")
             print(f"{Style.BRIGHT}Сервисы для проверки:{Style.RESET_ALL} {service if service else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Использовать DNS сервер:{Style.RESET_ALL} {dns_server_indices if dns_server_indices else 'спросить у пользователя'}")
-            print(f"{Style.BRIGHT}Количество одновременных запросов к одному DNS серверу:{Style.RESET_ALL} {request_limit}")
+            print(f"{Style.BRIGHT}Лимит запросов к каждому DNS серверу (запросов/сек):{Style.RESET_ALL} {rate_limit}")
             print(f"{Style.BRIGHT}Фильтрация IP-адресов Cloudflare:{Style.RESET_ALL} {'включена' if cloudflare in ['y', 'yes'] else 'выключена' if cloudflare in ['n', 'no'] else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Агрегация IP-адресов:{Style.RESET_ALL} {'mix режим /24 (255.255.255.0) + /32 (255.255.255.255)' if subnet == 'mix' else 'до /16 подсети (255.255.0.0)' if subnet == '16' else 'до /24 подсети (255.255.255.0)' if subnet == '24' else 'выключена' if subnet in ['n', 'no'] else 'спросить у пользователя'}")
             print(f"{Style.BRIGHT}Формат сохранения:{Style.RESET_ALL} {'только IP' if filetype == 'ip' else 'Linux route' if filetype == 'unix' else 'CIDR-нотация' if filetype == 'cidr' else 'Windows route' if filetype == 'win' else 'Mikrotik CLI' if filetype == 'mikrotik' else 'open vpn' if filetype == 'ovpn' else 'Keenetic CLI' if filetype == 'keenetic' else 'Wireguard' if filetype == 'wireguard' else 'спросить у пользователя'}")
@@ -96,11 +209,11 @@ def read_config(cfg_file):
             print(f"{Style.BRIGHT}Локальный список платформ:{Style.RESET_ALL} {'включен' if str(localplatform).strip().lower() in ('yes', 'y') else 'выключен'}")
             print(f"{Style.BRIGHT}Локальный список DNS серверов:{Style.RESET_ALL} {'включен' if str(localdns).strip().lower() in ('yes', 'y') else 'выключен'}")
 
-        return service, request_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, localdns, mk_comment
+        return service, rate_limit, filename, cloudflare, filetype, gateway, run_command, dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, localdns, mk_comment
 
     except Exception as e:
         print(f"{yellow(f'Ошибка загрузки {cfg_file}:')} {e}\n{Style.BRIGHT}Используются настройки 'по умолчанию'.{Style.RESET_ALL}")
-        return '', 20, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', '', '', '', 'off'
+        return '', 50, 'domain-ip-resolve.txt', '', '', '', '', [], '', '', '', '', '', 'off'
 
 def gateway_input(gateway):
     if not gateway:
@@ -116,11 +229,107 @@ def ken_gateway_input(ken_gateway):
     else:
         return ken_gateway
 
-def get_semaphore(request_limit):
-    return defaultdict(lambda: Semaphore(request_limit))
+class DNSServerWorker:
+    def __init__(self, name: str, nameservers: List[str], rate_limit: int = 10, stats_lock=None):
+        self.name = name
+        self.nameservers = nameservers
+        self.rate_limit = rate_limit
+        self.queue = asyncio.Queue()
+        self.request_times = deque()
+        self.results = []
+        self.stats = {
+            'processed': 0,
+            'errors': 0,
+            'success': 0
+        }
+        self.stats_lock = stats_lock or asyncio.Lock()
+        self.rate_limit_lock = asyncio.Lock()
 
-def init_semaphores(request_limit):
-    return get_semaphore(request_limit)
+    async def add_domain(self, domain: str):
+        await self.queue.put(domain)
+
+    async def _enforce_rate_limit(self):
+        async with self.rate_limit_lock:
+            now = time.monotonic()
+
+            while self.request_times and now - self.request_times[0] >= 1.0:
+                self.request_times.popleft()
+
+            if len(self.request_times) >= self.rate_limit:
+                sleep_time = 1.0 - (now - self.request_times[0])
+                if sleep_time > 0:
+                    await asyncio.sleep(sleep_time)
+                    now = time.monotonic()
+                    while self.request_times and now - self.request_times[0] >= 1.0:
+                        self.request_times.popleft()
+
+            self.request_times.append(now)
+
+    async def process_queue(self, global_stats: Dict[str, int]):
+        resolver = dns.asyncresolver.Resolver()
+        resolver.nameservers = self.nameservers
+        resolver.timeout = 10.0
+        resolver.lifetime = 15.0
+
+        domains = []
+        while not self.queue.empty():
+            domain = await self.queue.get()
+            domains.append(domain)
+
+        async def process_single_domain(domain):
+            await self._enforce_rate_limit()
+
+            try:
+                response = await resolver.resolve(domain)
+                ips = [ip.address for ip in response]
+
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['success'] += 1
+
+                return ips
+            except dns.resolver.NoNameservers:
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    global_stats['domain_errors'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['errors'] += 1
+                return []
+            except dns.resolver.Timeout:
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    global_stats['domain_errors'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['errors'] += 1
+                return []
+            except dns.resolver.NXDOMAIN:
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    global_stats['domain_errors'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['errors'] += 1
+                return []
+            except dns.resolver.NoAnswer:
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    global_stats['domain_errors'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['errors'] += 1
+                return []
+            except Exception:
+                async with self.stats_lock:
+                    global_stats['total_domains_processed'] += 1
+                    global_stats['domain_errors'] += 1
+                    self.stats['processed'] += 1
+                    self.stats['errors'] += 1
+                return []
+
+        results = await asyncio.gather(*[process_single_domain(domain) for domain in domains], return_exceptions=True)
+
+        for result in results:
+            if isinstance(result, list):
+                self.results.extend(result)
 
 async def load_urls(url: str) -> Dict[str, str]:
     try:
@@ -224,73 +433,49 @@ async def load_dns_names(url_or_file: str) -> List[str]:
             print(f"Ошибка при чтении файла {url_or_file}: {e}")
             return []
 
-async def resolve_domain_batch(domains: List[str], resolver: dns.asyncresolver.Resolver, 
-                              semaphore: Semaphore, dns_server_name: str, 
-                              stats: Dict[str, int], cloudflare_ips: Set[str], 
-                              include_cloudflare: bool) -> List[str]:
-    async with semaphore:
-        resolved_ips = []
-        for domain in domains:
-            try:
-                stats['total_domains_processed'] += 1
-                response = await resolver.resolve(domain)
-                ips = [ip.address for ip in response]
-                
-                for ip_address in ips:
-                    if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in resolver.nameservers:
-                        stats['null_ips_count'] += 1
-                    elif include_cloudflare and ip_address in cloudflare_ips:
-                        stats['cloudflare_ips_count'] += 1
-                    else:
-                        resolved_ips.append(ip_address)
-                        print(f"{Fore.BLUE}{domain} IP-адрес: {ip_address} - {dns_server_name}{Style.RESET_ALL}")
-                        
-            except Exception:
-                stats['domain_errors'] += 1
-        
-        return resolved_ips
-
-async def resolve_dns_optimized(service: str, dns_names: List[str], 
-                               dns_servers: List[Tuple[str, List[str]]], 
-                               cloudflare_ips: Set[str], unique_ips_all_services: Set[str],
-                               semaphore_dict: Dict, stats: Dict[str, int], 
-                               include_cloudflare: bool, batch_size: int = 50) -> str:
+async def resolve_dns_with_workers(service: str, dns_names: List[str],
+                                   dns_servers: List[Tuple[str, List[str]]],
+                                   cloudflare_ips: Set[str], unique_ips_all_services: Set[str],
+                                   stats: Dict[str, int], include_cloudflare: bool,
+                                   rate_limit: int, stats_lock: asyncio.Lock = None) -> str:
     try:
-        print(f"{Fore.YELLOW}Загрузка DNS имен платформы {service}...{Style.RESET_ALL}")
-        
-        domain_batches = [dns_names[i:i + batch_size] for i in range(0, len(dns_names), batch_size)]
-        
-        tasks = []
-        
-        for batch in domain_batches:
-            for server_name, servers in dns_servers:
-                resolver = dns.asyncresolver.Resolver()
-                resolver.nameservers = servers
-                
-                tasks.append(resolve_domain_batch(
-                    batch, resolver, semaphore_dict[server_name], 
-                    server_name, stats, cloudflare_ips, include_cloudflare
-                ))
-        
-        max_concurrent_tasks = min(len(tasks), 100)
-        
-        results = []
-        for i in range(0, len(tasks), max_concurrent_tasks):
-            batch_tasks = tasks[i:i + max_concurrent_tasks]
-            batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-            
-            for result in batch_results:
-                if not isinstance(result, Exception):
-                    results.extend(result)
-        
+        if stats_lock is None:
+            stats_lock = asyncio.Lock()
+
+        workers = []
+        for server_name, servers in dns_servers:
+            worker = DNSServerWorker(server_name, servers, rate_limit, stats_lock)
+            workers.append(worker)
+
+        for domain in dns_names:
+            for worker in workers:
+                await worker.add_domain(domain)
+
+        tasks = [worker.process_queue(stats) for worker in workers]
+
+        await asyncio.gather(*tasks)
+
+        all_nameservers = set()
+        for _, servers in dns_servers:
+            all_nameservers.update(servers)
+
         unique_ips_current_service = set()
-        for ip_address in results:
-            if ip_address not in unique_ips_all_services:
-                unique_ips_current_service.add(ip_address)
-                unique_ips_all_services.add(ip_address)
-        
+        for worker in workers:
+            for ip_address in worker.results:
+                if ip_address in ('127.0.0.1', '0.0.0.0') or ip_address in all_nameservers:
+                    stats['null_ips_count'] += 1
+                    continue
+
+                if include_cloudflare and ip_address in cloudflare_ips:
+                    stats['cloudflare_ips_count'] += 1
+                    continue
+
+                if ip_address not in unique_ips_all_services:
+                    unique_ips_current_service.add(ip_address)
+                    unique_ips_all_services.add(ip_address)
+
         return '\n'.join(sorted(unique_ips_current_service)) + '\n' if unique_ips_current_service else ''
-        
+
     except Exception as e:
         print(f"Не удалось сопоставить IP адреса {service} его доменным именам: {e}")
         return ""
@@ -465,6 +650,46 @@ def group_ips_in_subnets_optimized(filename: str, subnet: str):
     except Exception as e:
         print(f"Ошибка при обработке файла: {e}")
 
+def split_file_by_lines(filename: str, max_lines: int = 999):
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+
+        total_lines = len(lines)
+
+        if total_lines <= max_lines:
+            return False
+
+        base_name = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        extension = '.' + filename.rsplit('.', 1)[1] if '.' in filename else '.txt'
+
+        num_parts = (total_lines + max_lines - 1) // max_lines
+
+        print(f"\n{Style.BRIGHT}Результаты сохранены в файлы:{Style.RESET_ALL}")
+        for part in range(num_parts):
+            start_index = part * max_lines
+            end_index = min((part + 1) * max_lines, total_lines)
+
+            part_filename = f"{base_name}_p{part + 1}{extension}"
+
+            with open(part_filename, 'w', encoding='utf-8') as file:
+                file.writelines(lines[start_index:end_index])
+
+            print(f"{Style.BRIGHT}{part_filename} ({end_index - start_index} строк){Style.RESET_ALL}")
+
+        print(f"{Style.BRIGHT}Разделение завершено. Создано {num_parts} частей{Style.RESET_ALL}")
+
+        try:
+            os.remove(filename)
+        except Exception as e:
+            print(f"{red('Не удалось удалить исходный файл:')} {e}")
+
+        return True
+
+    except Exception as e:
+        print(f"{red('Ошибка при разделении файла:')} {e}")
+        return False
+
 def process_file_format(filename, filetype, gateway, selected_service, mk_list_name, mk_comment, subnet, ken_gateway):
     def read_file(filename):
         try:
@@ -554,6 +779,11 @@ def process_file_format(filename, filetype, gateway, selected_service, mk_list_n
     if filetype.lower() in formatters:
         write_file(filename, ips, formatters[filetype.lower()])
 
+        if filetype.lower() == 'keenetic bat':
+            return split_file_by_lines(filename, max_lines=999)
+
+    return False
+
 async def main():
     parser = argparse.ArgumentParser(description="DNS resolver script with custom config file.")
     parser.add_argument(
@@ -566,7 +796,7 @@ async def main():
 
     try:
         config_file = args.config
-        (service, request_limit, filename, cloudflare, filetype, gateway, run_command, 
+        (service, rate_limit, filename, cloudflare, filetype, gateway, run_command, 
          dns_server_indices, mk_list_name, subnet, ken_gateway, localplatform, 
          localdns, mk_comment) = read_config(config_file)
 
@@ -596,37 +826,70 @@ async def main():
             cloudflare_ips = set()
 
         unique_ips_all_services = set()
-        semaphore = init_semaphores(request_limit)
-        
+
         stats = {
             'null_ips_count': 0,
             'cloudflare_ips_count': 0,
             'total_domains_processed': 0,
             'domain_errors': 0
         }
-        
+
+        total_domains = 0
+        for service_name in selected_services:
+            if service_name == 'Custom DNS list':
+                total_domains += len(local_dns_names)
+            else:
+                url_or_file = urls[service_name]
+                print(f"{Style.BRIGHT}Загрузка DNS имен платформы{Style.RESET_ALL} {service_name}...")
+                dns_names = await load_dns_names(url_or_file)
+                total_domains += len(dns_names)
+
+        domains_count = total_domains
+        total_domains *= len(selected_dns_servers)
+        stats['total_domains'] = total_domains
+        stats['start_time'] = time.time()
+
+        print(f"{Style.BRIGHT}Загружено {domains_count} DNS имен.{Style.RESET_ALL}\n{yellow('Резолвинг...')}")
+
+        progress_tracker = ProgressTracker(
+            total=total_domains,
+            stats=stats,
+            unique_ips_set=unique_ips_all_services,
+            num_dns_servers=len(selected_dns_servers),
+            rate_limit=rate_limit,
+            domains_count=domains_count
+        )
+        progress_tracker.start()
+
+        stats_lock = asyncio.Lock()
+
+        periodic_updater = PeriodicProgressUpdater(progress_tracker, stats)
+        await periodic_updater.start()
+
         tasks = []
 
         for service_name in selected_services:
             if service_name == 'Custom DNS list':
-                tasks.append(resolve_dns_optimized(
-                    service_name, local_dns_names, selected_dns_servers, 
-                    cloudflare_ips, unique_ips_all_services, semaphore, 
-                    stats, include_cloudflare
+                tasks.append(resolve_dns_with_workers(
+                    service_name, local_dns_names, selected_dns_servers,
+                    cloudflare_ips, unique_ips_all_services,
+                    stats, include_cloudflare, rate_limit,
+                    stats_lock
                 ))
             else:
                 url_or_file = urls[service_name]
                 dns_names = await load_dns_names(url_or_file)
                 if dns_names:
-                    tasks.append(resolve_dns_optimized(
-                        service_name, dns_names, selected_dns_servers, 
-                        cloudflare_ips, unique_ips_all_services, semaphore, 
-                        stats, include_cloudflare
+                    tasks.append(resolve_dns_with_workers(
+                        service_name, dns_names, selected_dns_servers,
+                        cloudflare_ips, unique_ips_all_services,
+                        stats, include_cloudflare, rate_limit,
+                        stats_lock
                     ))
 
         if tasks:
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             with open(filename, 'w', encoding='utf-8') as file:
                 for result in results:
                     if isinstance(result, str) and result.strip():
@@ -635,31 +898,30 @@ async def main():
             with open(filename, 'w', encoding='utf-8') as file:
                 pass
 
-        print(f"\n{yellow('Проверка завершена.')}")
-        print(f"{Style.BRIGHT}Всего обработано DNS имен:{Style.RESET_ALL} {stats['total_domains_processed']}")
-        print(f"{Style.BRIGHT}Разрешено IP-адресов из DNS имен:{Style.RESET_ALL} {len(unique_ips_all_services)}")
-        print(f"{Style.BRIGHT}Ошибок разрешения доменов:{Style.RESET_ALL} {stats['domain_errors']}")
-        if stats['null_ips_count'] > 0:
-            print(f"{Style.BRIGHT}Исключено IP-адресов 'заглушек':{Style.RESET_ALL} {stats['null_ips_count']}")
-        if include_cloudflare:
-            print(f"{Style.BRIGHT}Исключено IP-адресов Cloudflare:{Style.RESET_ALL} {stats['cloudflare_ips_count']}")
-        print(f"{Style.BRIGHT}Использовались DNS серверы:{Style.RESET_ALL} " + ', '.join(
-            [f'{pair[0]} ({", ".join(pair[1])})' for pair in selected_dns_servers]))
+        await periodic_updater.stop()
+        progress_tracker.close()
 
+        print(f"{Style.BRIGHT}Использовались DNS серверы:{Style.RESET_ALL} " + ', '.join(
+            [pair[0] for pair in selected_dns_servers]))
+
+        print(f"\n{yellow('Обработка результатов...')}")
 
         subnet = subnet_input(subnet)
         if subnet != '32':
             group_ips_in_subnets_optimized(filename, subnet)
 
-        process_file_format(filename, filetype, gateway, selected_services, mk_list_name, mk_comment, subnet, ken_gateway)
+        file_was_split = process_file_format(filename, filetype, gateway, selected_services, mk_list_name, mk_comment, subnet, ken_gateway)
 
         if run_command:
             print("\nВыполнение команды после завершения скрипта...")
             os.system(run_command)
         else:
-            print(f"\n{Style.BRIGHT}Результаты сохранены в файл:{Style.RESET_ALL}", filename)
+            if not file_was_split:
+                print(f"\n{Style.BRIGHT}Результаты сохранены в файл:{Style.RESET_ALL}", filename)
             if os.name == 'nt':
                 input(f"Нажмите {green('Enter')} для выхода...")
+
+        print(f"\n{Style.BRIGHT}Если есть желание, можно угостить автора чашечкой какао:{Style.RESET_ALL} {green('https://boosty.to/ground_zerro')}")
 
     except KeyboardInterrupt:
         print(f"\n{red('Программа прервана пользователем')}")

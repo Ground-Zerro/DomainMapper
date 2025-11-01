@@ -47,7 +47,7 @@ exit /b 0
 
 REM Проверка и установка необходимых модулей Python
 :CheckModules
-set "modules=requests dnspython ipaddress configparser httpx colorama"
+set "modules=dnspython httpx colorama tqdm"
 echo.
 echo Проверка необходимых библиотек...
 
@@ -87,10 +87,26 @@ if ERRORLEVEL 1 (
     exit /b 1
 )
 
-move /y domain-ip-resolve.txt %UserProfile%\Desktop\domain-ip-resolve.txt
+echo Копирование файлов на рабочий стол...
+
+if exist domain-ip-resolve.txt (
+    move /y domain-ip-resolve.txt %UserProfile%\Desktop\domain-ip-resolve.txt
+    echo Файл скопирован в %UserProfile%\Desktop\domain-ip-resolve.txt
+) else (
+    echo Поиск разделенных файлов...
+    set "found=0"
+    for %%f in (domain-ip-resolve_p*.txt) do (
+        move /y "%%f" "%UserProfile%\Desktop\%%f"
+        echo Файл %%f скопирован на рабочий стол
+        set "found=1"
+    )
+    if "!found!"=="0" (
+        echo Не найдено файлов для копирования.
+    )
+)
+
 echo Программа завершена.
 del /q /f main.py
 endlocal
-echo файл скопирован в %UserProfile%\Desktop\domain-ip-resolve.txt
 pause
 exit /b 0
