@@ -93,6 +93,8 @@
 
 ### Использование
 
+#### Linux/macOS
+
 1. Установите [зависимости](https://github.com/Ground-Zerro/DomainMapper/blob/main/requirements.txt):
 
    ```bash
@@ -122,11 +124,33 @@
 
 5. Результат будет сохранен в файл `ip.txt` (или в несколько файлов, если был выбран формат с автоматическим разделением).
 
-### Примечания
+#### Windows
 
-- Если файл `ip.txt` не найден, скрипт выведет подробную инструкцию по его созданию и корректно завершится.
-- Для формата Keenetic BAT файл автоматически разделяется на части по 999 строк, исходный файл удаляется.
+##### Способ 1: Быстрый запуск (с автоматической установкой зависимостей)
 
+Откройте командную строку Windows и выполните:
+```cmd
+powershell -Command "irm https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/utilities/win/convert.bat -OutFile $env:TEMP\convert.bat" && cmd /c "%TEMP%\convert.bat"
+```
+
+Или откройте PowerShell и выполните:
+```powershell
+irm https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/utilities/win/convert.bat -OutFile "$env:TEMP\convert.bat"; cmd /c "$env:TEMP\convert.bat"
+```
+
+Скрипт автоматически:
+- Проверит наличие Python 3 (предложит установить, если отсутствует)
+- Установит необходимые библиотеки (httpx, colorama и др.)
+- Скачает и запустит утилиту
+- Попросит создать файл `ip.txt`, если он отсутствует
+
+##### Способ 2: Ручной запуск
+
+1. Скачайте файл [convert.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/convert.bat)
+
+2. Создайте файл `ip.txt` в той же директории, где находится `convert.bat`, и добавьте в него IP-адреса
+
+3. Запустите `convert.bat`
 
 ## split
 
