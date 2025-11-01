@@ -13,9 +13,9 @@
 **Можете попробовать эти варианты:**
 - Запустить PowerShell и выполнить команду:
 ```
-irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Windows/Win.bat -OutFile "$env:TEMP\Win.bat"; cmd /c "$env:TEMP\Win.bat"
+irm https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/Windows/Win.bat -OutFile "$env:TEMP\Win.bat"; cmd /c "$env:TEMP\Win.bat"
 ```
 - Открыть командную строку Windows и выполнить команду:
 ```
-powershell -Command "irm https://github.com/Ground-Zerro/DomainMapper/raw/main/Windows/Win.bat -OutFile $env:TEMP\Win.bat" && cmd /c "%TEMP%\Win.bat"
+powershell -Command "irm https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/Windows/Win.bat -OutFile $env:TEMP\Win.bat" && cmd /c "%TEMP%\Win.bat"
 ```
