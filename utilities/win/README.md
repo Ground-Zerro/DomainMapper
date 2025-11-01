@@ -6,15 +6,8 @@
 ## convert
 
 **Использование:**
-- Открыть командную строку Windows и выполнить команду:
-```
-powershell -Command "irm https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/utilities/win/convert.bat -OutFile $env:TEMP\convert.bat" && cmd /c "%TEMP%\convert.bat"
-```
-или  
-- Запустить PowerShell и выполнить команду:
-```
-irm https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/refs/heads/main/utilities/win/convert.bat -OutFile "$env:TEMP\convert.bat"; cmd /c "$env:TEMP\convert.bat"
-```
+1. Скачайте файл [convert.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/convert.bat)
 
-**Можете:**
-- Скачать convert.bat и запустить его.
+2. Создайте файл `ip.txt` в той же директории, где находится `convert.bat`, и добавьте в него IP-адреса
+
+3. Запустите `convert.bat`
