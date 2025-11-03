@@ -12,6 +12,7 @@ youtu.be
 youtube.com
 youtubei.googleapis.com
 yt4.ggpht.com
+yt3.ggpht.com
 ytimg.com
 ytimg.l.google.com
 r1---sn-2gb7sn7r.googlevideo.com
@@ -7342,6 +7343,7 @@ rr3---sn-5hneknek.googlevideo.com
 rr3---sn-5hneknes.googlevideo.com
 rr3---sn-5oxmp55u-8pxe.googlevideo.com
 rr3---sn-8vq54voxu-5qce.googlevideo.com
+rr3---sn-8ph2xajvh-axql.googlevideo.com
 rr3---sn-a5mekn6d.googlevideo.com
 rr3---sn-a5mekn6l.googlevideo.com
 rr3---sn-a5mekn6r.googlevideo.com
