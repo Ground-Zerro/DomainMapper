@@ -121,6 +121,8 @@ jetbrains.team
 grazie.ai
 grazie.aws.intellij.net
 jetbrains.ai
+proxy.jetbrains.ai
+proxy.stgn.jetbrains.ai
 datalore.io
 kotlinlang.org
 youtrack.cloud
