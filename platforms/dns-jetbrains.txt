@@ -114,3 +114,13 @@ onboard.jetbrains.com
 youtube.master-zdchint.mau.jetbrains.com
 youtube.staging-zdchint.mau.jetbrains.com
 zillow.fls.jetbrains.com
+jetbrains.net
+intellij.com
+intellij.org
+jetbrains.team
+grazie.ai
+grazie.aws.intellij.net
+jetbrains.ai
+datalore.io
+kotlinlang.org
+youtrack.cloud
