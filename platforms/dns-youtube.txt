@@ -7863,3 +7863,9 @@ rr8---sn-xuj-5qq6.googlevideo.com
 rr9---sn-xuj-5qq6.googlevideo.com
 v12.lscache8.googlevideo.com
 v23.lscache6.googlevideo.com
+notifications-pa.googleapis.com
+yt3.googleusercontent.com
+googleads.g.doubleclick.net
+i9.ytimg.com
+i.ytimg.com
+s.youtube.com
