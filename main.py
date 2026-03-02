@@ -143,26 +143,51 @@ def magneta(text):
 
 def blue(text):
     return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
-
+    
 http_client = None
+_http_client = None
+http_client = None
+
 dns_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/dnsdb"
 platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
 
 async def get_http_client():
-    global http_client
-    if http_client is None:
-        http_client = httpx.AsyncClient(
+    """
+    Создаёт httpx.AsyncClient с привязкой к ТЕКУЩЕМУ event loop.
+    Если loop изменился — создаёт новый клиент.
+    """
+    global _http_client, _http_client_loop
+    
+    current_loop = asyncio.get_running_loop()
+    
+    # Если клиент существует но создан в другом loop — закрываем и создаём новый
+    if _http_client is not None:
+        if _http_client_loop is not current_loop:
+            try:
+                await _http_client.aclose()
+            except:
+                pass
+            _http_client = None
+    
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
             timeout=20.0,
             limits=httpx.Limits(max_connections=50, max_keepalive_connections=10),
-            follow_redirects=True
-        )
-    return http_client
+            follow_redirects=True)
+        _http_client_loop = current_loop
+    
+    return _http_client
 
 async def cleanup_http_client():
-    global http_client
-    if http_client:
-        await http_client.aclose()
-        http_client = None
+    """Очищает http_client"""
+    global _http_client, _http_client_loop
+    if _http_client:
+        try:
+            await _http_client.aclose()
+        except:
+            pass
+        _http_client = None
+        _http_client_loop = None
 
 def read_config(cfg_file):
     try:
