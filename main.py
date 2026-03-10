@@ -11,7 +11,9 @@ import dns.asyncresolver
 import httpx
 from colorama import Fore, Style, init
 from tqdm import tqdm
+from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 init(autoreset=True)
 
 class ProgressTracker:
@@ -143,11 +145,10 @@ def magneta(text):
 
 def blue(text):
     return f"{Fore.BLUE}{text}{Style.RESET_ALL}"
-    
+
 http_client = None
 _http_client = None
-http_client = None
-
+_http_client_loop = None  # ← Запоминаем loop, в котором создан клиент
 dns_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/dnsdb"
 platform_db_url = "https://raw.githubusercontent.com/Ground-Zerro/DomainMapper/main/platformdb"
 
@@ -173,7 +174,8 @@ async def get_http_client():
         _http_client = httpx.AsyncClient(
             timeout=20.0,
             limits=httpx.Limits(max_connections=50, max_keepalive_connections=10),
-            follow_redirects=True)
+            follow_redirects=True
+        )
         _http_client_loop = current_loop
     
     return _http_client
@@ -954,6 +956,78 @@ async def main():
         print(f"\n{red('Критическая ошибка:')} {e}")
     finally:
         await cleanup_http_client()
+
+
+async def load_urls_from_file() -> Dict[str, str]:
+    """Загружает platformdb из локального файла"""
+    try:
+        file_path = PROJECT_ROOT / 'platformdb'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            urls = {}
+            for line in file:
+                if line.strip() and ': ' in line:
+                    service, url = line.split(': ', 1)
+                    urls[service.strip()] = url.strip()
+            return urls
+    except Exception as e:
+        print(f"\n{red('Локальный platformdb не найден')}")
+        return {}
+
+async def load_dns_from_file() -> Dict[str, List[str]]:
+    """Загружает dnsdb из локального файла"""
+    try:
+        file_path = PROJECT_ROOT / 'dnsdb'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            dns_servers = {}
+            for line in file:
+                if line.strip() and ': ' in line:
+                    service, servers = line.split(': ', 1)
+                    dns_servers[service.strip()] = servers.strip().split()
+            return dns_servers
+    except Exception as e:
+        print(f"\n{red('Локальный dnsdb не найден')}")
+        return {}
+
+async def load_urls_with_retry(url: str, max_retries: int = 3, delay: float = 2.0) -> Dict[str, str]:
+    for attempt in range(max_retries):
+        try:
+            client = await get_http_client()
+            response = await client.get(url, timeout=30.0)
+            response.raise_for_status()
+            text = response.text
+            urls = {}
+            for line in text.split('\n'):
+                if line.strip() and ': ' in line:
+                    service, url_val = line.split(': ', 1)
+                    urls[service.strip()] = url_val.strip()
+            return urls
+        except Exception as e:
+            if attempt == max_retries - 1:
+                print(f"❌ Не удалось загрузить платформы: {e}")
+                return {}
+            await asyncio.sleep(delay * (attempt + 1))
+    return {}
+
+async def load_dns_with_retry(url: str, max_retries: int = 3, delay: float = 2.0) -> Dict[str, List[str]]:
+    for attempt in range(max_retries):
+        try:
+            client = await get_http_client()
+            response = await client.get(url, timeout=30.0)
+            response.raise_for_status()
+            text = response.text
+            dns_servers = {}
+            for line in text.split('\n'):
+                if line.strip() and ': ' in line:
+                    service, servers = line.split(': ', 1)
+                    dns_servers[service.strip()] = servers.strip().split()
+            return dns_servers
+        except Exception as e:
+            if attempt == max_retries - 1:
+                print(f"❌ Не удалось загрузить DNS: {e}")
+                return {}
+            await asyncio.sleep(delay * (attempt + 1))
+    return {}
+
 
 if __name__ == "__main__":
     try:
