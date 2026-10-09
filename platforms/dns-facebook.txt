@@ -1,4 +1,4 @@
-﻿1-edge-chat.facebook.com
+1-edge-chat.facebook.com
 10.72.180.60lookaside.fbsbx.com
 157.240.2.202010.128.159.10platform-lookaside.fbsbx.com
 1kkjf7m8.dns.facebook.com
@@ -16398,7 +16398,6 @@ ssw001.s001.f03.snc1.tfbnw.net
 ssw002.s001.f03.snc1.tfbnw.net
 ssw002.s001.f05.snc1.tfbnw.net
 star-mini.c10r.facebook.com
-star.c10r.facebook.com
 star.facebook.com
 starbucks.m.facebook.com
 static-dev.facebook.com
@@ -18226,7 +18225,6 @@ z-m-scontent.fvte3-1.fna.fbcdn.net
 z-m-scontent.fvte5-1.fna.fbcdn.net
 z-m-scontent.xx.fbcdn.net
 z-m.C10R.facebook.com
-z-m.c10r.facebook.com
 z-p1-graph.facebook.com
 z-p1.c10r.facebook.com
 z-p15-instagram.c10r.facebook.com

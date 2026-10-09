@@ -1,4 +1,4 @@
-﻿bard.google.com
+bard.google.com
 calendar.google.com
 drive.google.com
 docs.google.com

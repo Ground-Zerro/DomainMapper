@@ -1,109 +1,81 @@
 import random
+import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import deque
+from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
 
-
-def parse_page(url):
-    for attempt in range(5):  # До 5 попыток для одной страницы
-        try:
-            response = requests.get(url)
-            if response.status_code == 404:  # Проверка на несуществующую страницу
-                return None
-            response.raise_for_status()
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            data = set()  # Используем множество для уникальных доменов
-            rows = soup.select('table tbody tr')
-
-            if not rows:  # Если на странице нет строк, возвращаем None
-                return None
-
-            for row in rows:
-                columns = row.find_all('td')
-                if len(columns) > 3 and columns[2].text.strip() == 'A':  # Проверка на тип записи 'A'
-                    domain = columns[0].text.strip()  # Извлечение столбца 'Domain'
-                    data.add(domain)  # Добавляем в множество
-
-            time.sleep(random.choice([2, 3, 4, 5]))  # Случайная задержка между запросами
-            
-            if attempt > 0:
-                print(f"Успешная загрузка {url} после {attempt}-й попытки.")
-            return data
-
-        except requests.exceptions.HTTPError as e:
-            if response.status_code == 429:
-                print(f"Ошибка загрузки {url}. Пробуем еще раз... (Попытка {attempt + 1})")
-                time.sleep(5)  # Фиксированная задержка перед повторной попыткой
-            else:
-                raise e
+BASE_URL = "https://rapiddns.io/subdomain/{domain}"
+TARGET = Path("result.txt")
+ATTEMPTS = 5
+EMPTY_PAGE_LIMIT = 3
+REPEATED_PAGE_LIMIT = 3
+RETRY_DELAY = 5
+PAGE_DELAYS = (2, 3, 4, 5)
+REQUEST_TIMEOUT = 30
+NOT_FOUND = 404
+TOO_MANY_REQUESTS = 429
 
 
-def parse_all_pages(base_url):
-    all_domains = set()  # Используем множество для уникальных доменов
-    page = 1  # Всегда начинаем с первой страницы
-    keep_parsing = True
+def parse_page(session: requests.Session, url: str) -> set[str] | None:
+    for attempt in range(1, ATTEMPTS + 1):
+        response = session.get(url, timeout=REQUEST_TIMEOUT)
+        if response.status_code == NOT_FOUND:
+            return None
+        if response.status_code == TOO_MANY_REQUESTS:
+            print(f"Ошибка загрузки {url}. Пробуем еще раз... (Попытка {attempt})")
+            time.sleep(RETRY_DELAY)
+            continue
+        response.raise_for_status()
+        rows = BeautifulSoup(response.text, "html.parser").select("table tbody tr")
+        if not rows:
+            return None
+        time.sleep(random.choice(PAGE_DELAYS))
+        if attempt > 1:
+            print(f"Успешная загрузка {url} после {attempt}-й попытки.")
+        return {
+            columns[0].text.strip()
+            for columns in (row.find_all("td") for row in rows)
+            if len(columns) > 3 and columns[2].text.strip() == "A"
+        }
+    raise RuntimeError(f"Не удалось загрузить {url} за {ATTEMPTS} попыток")
 
-    empty_page_attempts = 0  # Счётчик пустых страниц
-    recent_pages_data = []  # Список для хранения данных последних страниц
 
-    while keep_parsing:
-        print(f"Парсим страницу {page}")
-        url = f"{base_url}?page={page}"
-
-        try:
-            result = parse_page(url)
-            if result is None:  # Если страница пуста или не существует
+def parse_all_pages(base_url: str) -> set[str]:
+    domains: set[str] = set()
+    recent: deque[set[str]] = deque(maxlen=REPEATED_PAGE_LIMIT)
+    empty_pages = 0
+    page = 1
+    with requests.Session() as session:
+        while True:
+            print(f"Парсим страницу {page}")
+            result = parse_page(session, f"{base_url}?page={page}")
+            if result is None:
+                empty_pages += 1
+                if empty_pages >= EMPTY_PAGE_LIMIT:
+                    print(f"Страница {page} пуста после {EMPTY_PAGE_LIMIT} попыток. Остановка.")
+                    return domains
                 print(f"Страница {page} не существует или пуста. Проверяем еще раз...")
-                empty_page_attempts += 1
-                time.sleep(5)  # Ожидание перед повторной проверкой
-                if empty_page_attempts >= 3:
-                    print(f"Страница {page} пуста после 3 попыток. Остановка.")
-                    keep_parsing = False
-                    break
-                else:
-                    continue  # Переходим к следующей попытке
-            else:
-                empty_page_attempts = 0  # Обнуляем счётчик, если нашли данные
-                all_domains.update(result)  # Добавляем новые домены в множество
-                print(f"Разбор страницы {page} завершен.")
-
-                # Добавляем данные страницы в список для сравнения
-                recent_pages_data.append(result)
-                if len(recent_pages_data) > 3:  # Храним данные только последних 3 страниц
-                    recent_pages_data.pop(0)
-
-                # Проверяем, повторяются ли данные на последних трёх страницах
-                if len(recent_pages_data) == 3 and recent_pages_data[0] == recent_pages_data[1] == recent_pages_data[2]:
-                    print(f"Данные на последних трёх страницах одинаковы. Остановка парсинга.")
-                    keep_parsing = False
-                    break
-
-        except Exception as e:
-            print(f"Ошибка парсинга страницы {page}: {e}")
-            raise e
-
-        page += 1  # Переход к следующей странице
-
-    return all_domains
+                time.sleep(RETRY_DELAY)
+                continue
+            empty_pages = 0
+            domains.update(result)
+            print(f"Разбор страницы {page} завершен.")
+            recent.append(result)
+            if len(recent) == REPEATED_PAGE_LIMIT and all(item == recent[0] for item in recent):
+                print("Данные на последних трёх страницах одинаковы. Остановка парсинга.")
+                return domains
+            page += 1
 
 
-def get_subdomain_url():
-    base_url = 'https://rapiddns.io/subdomain/{url}'
-    url = input("Введите URL: ")
-    full_url = base_url.format(url=url)
-    return full_url  # Возвращаем полный URL
+def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
+    domains = parse_all_pages(BASE_URL.format(domain=input("Введите URL: ").strip()))
+    TARGET.write_text("".join(f"{domain}\n" for domain in sorted(domains)), encoding="utf-8")
+    print(f"Найдено {len(domains)} A записей. \nРезультаты сохранены в {TARGET}.")
 
 
-base_url = get_subdomain_url()  # Вызов функции для получения полного URL
-
-domains = parse_all_pages(base_url)
-
-# Запись результата в файл
-with open('result.txt', 'w') as file:
-    for domain in sorted(domains):  # Сортируем домены перед записью
-        file.write(f"{domain}\n")
-
-print(f"Найдено {len(domains)} A записей. \nРезультаты сохранены в result.txt.")
+if __name__ == "__main__":
+    main()

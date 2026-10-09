@@ -1,4 +1,4 @@
-﻿academy.bingads.microsoft.com
+academy.bingads.microsoft.com
 ads.bingads.microsoft.com
 advertise.bingads.microsoft.com
 api.bing.com

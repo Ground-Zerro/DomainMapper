@@ -3,35 +3,39 @@
 localplatform = no
 localdns = no
 
-# Сервисы для проверки (например: all, youtube, google, telegram, custom и т.д.)
-service = 
+# Сервисы для проверки через запятую, без учета регистра (например: all, youtube, google, telegram, custom)
+service =
 
-# Список DNS серверов по номерам (0 - все, 1 - системный, 2 - google, 3 - quad9 и т.д.)
-dnsserver = 
+# Список DNS серверов по номерам через пробел (0 - все, 1 - системный, 2 - google, 3 - quad9 и т.д.)
+dnsserver =
 
 # Исключить Cloudflare IP (yes/no)
 cloudflare =
 
 # Агрегация подсетей (16, 24, mix, no)
-subnet = 
+subnet =
 
 # Имя выходного файла
 filename = domain-ip-resolve.txt
 
-# Лимит запросов к каждому DNS серверу (запросов в секунду, по умолчанию 50)
-# Контролирует максимальное количество DNS запросов к одному серверу в секунду
-rate_limit = 50
+# Максимум запросов в секунду к одному DNS серверу (по умолчанию 100).
+# При таймаутах частота к этому серверу снижается автоматически и затем восстанавливается.
+rate_limit = 100
 
-# Формат результата (ip, unix, win, mikrotik, ovpn, wireguard, cidr, keenetic bat и т.д.)
-filetype = 
+# Максимум запросов в секунду ко всем DNS серверам вместе (по умолчанию 200).
+# Ограничивает общую нагрузку на сеть: превышение приводит к потере запросов роутером или провайдером.
+total_rate_limit = 200
+
+# Формат результата (ip, win, unix, keenetic bat, keenetic cli, cidr, mikrotik, ovpn, wireguard)
+filetype =
 
 # Параметры для форматов:
 ## для win/unix — IP шлюза или имя интерфейса
-gateway = 
-## для keenetic — IP шлюза или имя интерфейса, можно оба через пробел
-keenetic = 
+gateway =
+## для keenetic cli — IP шлюза или имя интерфейса, можно оба через пробел
+keenetic =
 ## для mikrotik — имя списка address-list
-listname = 
+listname =
 ## для mikrotik - добавить или убирать "comment=%SERVICE_NAME%" в правилах Mikrotik (on/off)
 mk_comment = off
 
@@ -39,4 +43,4 @@ mk_comment = off
 cfginfo = yes
 
 # Выполнить команду или запустить приложение после завершения (команда/полный путь к приложению)
-run = 
+run =

@@ -1,4 +1,4 @@
-﻿a.ns.apple.com
+a.ns.apple.com
 ab.apple.com.akadns.net
 aidc.apple.com
 albert.apple.com

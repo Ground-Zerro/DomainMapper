@@ -1,4 +1,4 @@
-﻿adobe.com
+adobe.com
 firewall-prod-cloud.aem.adobe.com
 foxs.campaign.adobe.com
 g.apex.adobe.com

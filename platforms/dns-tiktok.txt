@@ -1,4 +1,4 @@
-﻿abtest-sg-tiktok.byteoversea.com
+abtest-sg-tiktok.byteoversea.com
 abtest-va-tiktok.byteoversea.com
 account-tiktok.com
 analytics.tiktok.com

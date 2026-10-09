@@ -105,5 +105,4 @@ cookielaw.org
 cdn-cf.cookielaw.org
 cdn.cookielaw.org
 cmp-cdn.cookielaw.org
-cookielaw.org
 www.cookielaw.org

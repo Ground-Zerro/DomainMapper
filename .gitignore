@@ -1,5 +1,11 @@
 .venv/
+__pycache__/
+build/
 platforms_apex/
 config.ini
 custom-dns-list.txt
-domain-ip-resolve.txt
+domain-ip-resolve*.txt
+ip.txt
+ip_p*.txt
+result.txt
+verified_domains.txt
