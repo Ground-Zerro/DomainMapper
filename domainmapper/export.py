@@ -13,7 +13,7 @@ def export(addresses: Collection[int], path: Path, aggregation_key: str, format_
     lines = route_format.render(aggregation.apply(addresses), route_format.complete(values))
     files = route_format.write(path, lines)
     if len(files) == 1:
-        print(f"\n{bright('Результаты сохранены в файл:')} {path}")
+        print(f"\n{bright('Результаты сохранены в файл:')} {files[0][0]}")
         return
     print(f"\n{bright('Результаты сохранены в файлы:')}")
     for part, count in files:

@@ -6,8 +6,6 @@ from pathlib import Path
 
 from .console import ask_until_filled, choose_one, cyan, green
 
-ADDRESS_FIELDS = {"ip": "{ip}", "mask": "{mask}", "cidr": "{cidr}"}
-
 
 @dataclass(frozen=True, slots=True)
 class Parameter:
@@ -23,32 +21,41 @@ class RouteFormat:
     template: str
     parameters: tuple[Parameter, ...] = ()
     separator: str = "\n"
+    header: str = ""
+    footer: str = ""
+    extension: str | None = None
     chunk_size: int | None = None
 
     def example(self, placeholders: Mapping[str, str], values: Mapping[str, str]) -> str:
-        line = self.template.format_map(ChainMap(placeholders, {parameter.name: cyan(parameter.placeholder) for parameter in self.parameters}, values))
-        return line if self.separator == "\n" else f"{line}{self.separator}{line}{self.separator}..."
+        line = self.template.format_map(ChainMap(placeholders, {parameter.name: cyan(parameter.placeholder) for parameter in self.parameters}, values)).strip()
+        return line if "\n" in self.separator else f"{line}{self.separator}{line}{self.separator}..."
 
     def complete(self, values: Mapping[str, str]) -> dict[str, str]:
         return {**values, **{parameter.name: ask_until_filled(values[parameter.name], parameter.prompt) for parameter in self.parameters}}
 
     def render(self, networks: Sequence[IPv4Network], values: Mapping[str, str]) -> list[str]:
-        escaped = {name: value.replace("{", "{{").replace("}", "}}") for name, value in values.items()}
-        template = self.template.format_map(ChainMap(ADDRESS_FIELDS, escaped))
-        return [template.format(ip=network.network_address, mask=network.netmask, cidr=network.with_prefixlen) for network in networks]
+        return [
+            self.template.format(ip=network.network_address, mask=network.netmask, cidr=network.with_prefixlen, **values)
+            for network in networks
+        ]
 
     def write(self, path: Path, lines: Sequence[str]) -> list[tuple[Path, int]]:
+        if self.extension:
+            path = path.with_suffix(self.extension)
         if self.chunk_size is None or len(lines) <= self.chunk_size:
-            path.write_text(self.separator.join(lines), encoding="utf-8")
+            self._write_file(path, lines)
             return [(path, len(lines))]
         path.unlink(missing_ok=True)
         parts = []
         for number, start in enumerate(range(0, len(lines), self.chunk_size), 1):
             part = path.with_name(f"{path.stem}_p{number}{path.suffix or '.txt'}")
             chunk = lines[start:start + self.chunk_size]
-            part.write_text(self.separator.join(chunk), encoding="utf-8")
+            self._write_file(part, chunk)
             parts.append((part, len(chunk)))
         return parts
+
+    def _write_file(self, path: Path, lines: Sequence[str]) -> None:
+        path.write_text(f"{self.header}{self.separator.join(lines)}{self.footer}", encoding="utf-8")
 
 
 GATEWAY = Parameter(
@@ -81,6 +88,14 @@ FORMATS: dict[str, RouteFormat] = {
     "mikrotik": RouteFormat("Mikrotik CLI", "/ip/firewall/address-list add list={listname}{mikrotik_comment} address={cidr}", (LIST_NAME,)),
     "ovpn": RouteFormat("OpenVPN", 'push "route {ip} {mask}"'),
     "wireguard": RouteFormat("Wireguard", "{cidr}", separator=", "),
+    "amnezia": RouteFormat(
+        "AmneziaVPN (JSON для раздельного туннелирования)",
+        '    {{"hostname": "{cidr}", "ip": ""}}',
+        separator=",\n",
+        header="[\n",
+        footer="\n]\n",
+        extension=".json",
+    ),
     PLAIN: RouteFormat("только IP", "{ip}"),
 }
 

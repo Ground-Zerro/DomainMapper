@@ -33,6 +33,7 @@ pip install -r utilities/requirements.txt
   - Mikrotik firewall (`/ip/firewall/address-list`)
   - OpenVPN (`push "route"`)
   - WireGuard (одной строкой через запятую)
+  - AmneziaVPN (JSON для раздельного туннелирования, сохраняется в `ip.json`)
 - Для формата Keenetic BAT список длиннее 999 строк делится на файлы `ip_p1.txt`, `ip_p2.txt` и т.д., исходный `ip.txt` при этом удаляется.
 - В формате Keenetic CLI комментарий маршрута — `!Service`. В формате Mikrotik комментарий не добавляется.
 
@@ -60,7 +61,7 @@ pip install -r utilities/requirements.txt
 4. Ответьте на вопросы:
    - исключить ли IP-адреса Cloudflare (`1` — да, `Enter` — нет);
    - агрегация (`1` — /16, `2` — /24, `3` — mix, `Enter` — без агрегации);
-   - формат сохранения (`1`–`8` или `Enter` для простого списка IP);
+   - формат сохранения (`1`–`9` или `Enter` для простого списка IP);
    - шлюз, интерфейс или имя списка, если выбранный формат их требует.
 
 5. Результат будет записан в `ip.txt` (или в несколько файлов для формата Keenetic BAT).

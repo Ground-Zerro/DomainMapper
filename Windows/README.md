@@ -22,6 +22,8 @@ powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; irm http
 ```
 Повторный запуск той же командой скачивает актуальную версию программы.
 
+**Старые команды с `Win.bat`** продолжают работать: теперь `Win.bat` сообщает, что программа доступна как `DomainMapper.exe`, скачивает её в папку `Загрузки` и запускает. Python для этого не нужен.
+
 
 **Настройка:**
 - Файлы `config.ini` и `custom-dns-list.txt` положите в папку с `DomainMapper.exe`. Описание параметров — в [основном README](https://github.com/Ground-Zerro/DomainMapper#domain-mapper). Файлы можно сохранять в UTF-8 или в стандартной кодировке Windows (ANSI).

@@ -26,7 +26,7 @@ rate_limit = 100
 # Ограничивает общую нагрузку на сеть: превышение приводит к потере запросов роутером или провайдером.
 total_rate_limit = 200
 
-# Формат результата (ip, win, unix, keenetic bat, keenetic cli, cidr, mikrotik, ovpn, wireguard)
+# Формат результата (ip, win, unix, keenetic bat, keenetic cli, cidr, mikrotik, ovpn, wireguard, amnezia)
 filetype =
 
 # Параметры для форматов:
