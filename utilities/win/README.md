@@ -28,6 +28,8 @@
 
 Работает со списками из папки `platforms` репозитория, поэтому нужен скачанный (клонированный) репозиторий.
 
+Скачайте [extract_apex_domains.exe](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/extract_apex_domains.exe) или [extract_apex_domains.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/extract_apex_domains.bat).
+
 1. Запустите `extract_apex_domains.bat` из папки `utilities\win` репозитория: он загрузит `extract_apex_domains.exe` и запустит его в корне репозитория.
 2. Результаты будут сохранены в папке `platforms_apex` в корне репозитория.
 
