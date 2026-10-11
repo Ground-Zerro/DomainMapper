@@ -1,0 +1,49 @@
+name: Update Platforms
+
+on:
+  schedule:
+    - cron: '0 4 1,15 * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run
+        run: python -m utilities.update_platforms
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add platforms/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update platforms $(date -u +%Y-%m-%d)"
+          git push origin HEAD
+
+      - name: Cleanup old runs
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/workflows/update-platforms.yml/runs?per_page=100" \
+            --jq '.workflow_runs | sort_by(.created_at) | reverse | .[2:] | .[].id' |
+          while read -r id; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/runs/$id" && echo "удалён прогон $id"
+          done

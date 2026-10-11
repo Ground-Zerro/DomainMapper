@@ -1062,6 +1062,7 @@ cd.telegram.org
 cdb.telegram.org
 cde.telegram.org
 cdms.telegram.org
+cdn-telegram.org
 cdn.t.me
 cdn2.telegram.org
 cdn4.telegram.org
@@ -6153,6 +6154,7 @@ telecom.telegram.org
 telefon.telegram.org
 telega.one
 telegra.ph
+telegram-cdn.org
 telegram.dog
 telegram.me
 telegram.org
@@ -6294,6 +6296,8 @@ tomato.telegram.org
 tomita.telegram.org
 tomo.telegram.org
 tomy.telegram.org
+ton.org
+toncenter.com
 toni.telegram.org
 toolbar.telegram.org
 tools.t.me
@@ -6465,6 +6469,7 @@ usa.telegram.org
 user.telegram.org
 user1.telegram.org
 user2.telegram.org
+usercontent.dev
 users.telegram.org
 uslugi.telegram.org
 usrjl.mx8.telegram.org

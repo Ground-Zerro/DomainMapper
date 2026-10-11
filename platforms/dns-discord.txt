@@ -1,4 +1,6 @@
 1187013846746005515.discordsays.com
+airhorn.solutions
+airhornbot.com
 atlanta1068.discord.gg
 atlanta1271.discord.gg
 atlanta1350.discord.gg
@@ -89,6 +91,7 @@ atlanta9825.discord.gg
 atlanta9866.discord.gg
 atlanta9922.discord.gg
 atlanta9978.discord.gg
+bigbeans.solutions
 blakinola.discord.gg
 brazil1084.discord.gg
 brazil11000.discord.gg
@@ -492,9 +495,12 @@ buenos-aires9775.discord.gg
 cdn.discordapp.com
 dis.gd
 disboard.org
+discord-activities.com
+discord-attachments-uploads-prd.storage.googleapis.com
 discord.center
 discord.co
 discord.com
+discord.design
 discord.dev
 discord.gg
 discord.gift
@@ -504,16 +510,18 @@ discord.media
 discord.new
 discord.st
 discord.store
-discordInvites.net
+discord.tools
 discordactivities.com
 discordapp.com
 discordapp.io
+discordapp.net
 discordbee.com
 discordbotlist.com
 discordcdn.com
 discordexpert.com
 discordhome.com
 discordhub.com
+discordinvites.net
 discordlist.me
 discordlist.space
 discordmerch.com
@@ -542,7 +550,7 @@ dubai6910.discord.gg
 dubai6962.discord.gg
 dubai949.discord.gg
 dyno.gg
-findAdiscord.com
+findadiscord.com
 finland10000.discord.gg
 finland10001.discord.gg
 finland10002.discord.gg
@@ -957,6 +965,7 @@ frankfurt9970.discord.gg
 frankfurt9985.discord.gg
 gateway-cf.discord.gg
 gateway.discord.gg
+hammerandchisel.ssl.zendesk.com
 hongkong11000.discord.gg
 hongkong11001.discord.gg
 hongkong11003.discord.gg
@@ -4113,6 +4122,7 @@ warsaw10155.discord.gg
 warsaw10156.discord.gg
 warsaw10157.discord.gg
 warsaw10158.discord.gg
+watchanimeattheoffice.com
 www.discord.com
 www.discord.gg
 www.discordapp.com

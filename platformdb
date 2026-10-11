@@ -5,6 +5,7 @@ Youtube: platforms/dns-youtube.txt
 Anthropic: platforms/dns-anthropic.txt
 Linkedin: platforms/dns-linkedin.txt
 Facebook: platforms/dns-facebook.txt
+Meta: platforms/dns-meta.txt
 Openai: platforms/dns-openai.txt
 Tik-Tok: platforms/dns-tiktok.txt
 Instagram: platforms/dns-instagram.txt
@@ -22,7 +23,7 @@ Discord: platforms/dns-discord.txt
 Jetbrains: platforms/dns-jetbrains.txt
 Xbox: platforms/dns-xbox.txt
 Telegram: platforms/dns-telegram.txt
-WhatsApp: https://raw.githubusercontent.com/HybridNetworks/whatsapp-cidr/main/WhatsApp/whatsapp_domainlist.txt
+WhatsApp: platforms/dns-whatsapp.txt
 Online movie theaters: platforms/dns-onlinetheater.txt
 Windsurf: platforms/dns-windsurf.txt
 Roblox: platforms/dns-roblox.txt

@@ -1,0 +1,29 @@
+platforms/dns-youtube.txt: youtube
+platforms/dns-anthropic.txt: anthropic
+platforms/dns-linkedin.txt: linkedin
+platforms/dns-facebook.txt: facebook
+platforms/dns-meta.txt: meta
+platforms/dns-openai.txt: openai
+platforms/dns-tiktok.txt: tiktok
+platforms/dns-instagram.txt: instagram
+platforms/dns-twitter.txt: twitter
+platforms/dns-netflix.txt: netflix
+platforms/dns-bing.txt: bing
+platforms/dns-adobe.txt: adobe
+platforms/dns-apple.txt: apple
+platforms/dns-google.txt: google
+platforms/dns-ttrackers.txt: category-public-tracker
+platforms/dns-github-pilot.txt: github-copilot
+platforms/dns-twitch.txt: twitch
+platforms/dns-discord.txt: discord
+platforms/dns-jetbrains.txt: jetbrains, jetbrains-ai
+platforms/dns-xbox.txt: xbox
+platforms/dns-telegram.txt: telegram
+platforms/dns-whatsapp.txt: whatsapp
+platforms/dns-onlinetheater.txt: hdrezka, kinopub
+platforms/dns-windsurf.txt: windsurf
+platforms/dns-roblox.txt: roblox
+platforms/dns-zscaler.txt: zscaler
+platforms/dns-disneyplus.txt: disney
+platforms/dns-eufy.txt: anker
+platforms/dns-tmdb.txt: tmdb

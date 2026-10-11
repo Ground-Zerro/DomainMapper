@@ -1,11 +1,13 @@
 import asyncio
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 import dns.asyncresolver
 import dns.exception
 import dns.resolver
+
+from domainmapper.console import green, red, wait_for_exit
+from domainmapper.files import read_text
 
 SOURCE = Path("result.txt")
 TARGET = Path("verified_domains.txt")
@@ -61,12 +63,20 @@ async def verify(domains: Sequence[str]) -> set[str]:
     return verified
 
 
-def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")
-    domains = list(dict.fromkeys(filter(None, map(str.strip, SOURCE.read_text(encoding="utf-8-sig").splitlines()))))
+def run() -> None:
+    if not SOURCE.is_file():
+        print(red(f"Файл {SOURCE} не найден."))
+        print(f"Создайте файл {green(SOURCE)} в текущей папке со списком доменов (по одному на строку), например результат утилиты subdomain.")
+        return
+    domains = list(dict.fromkeys(filter(None, map(str.strip, read_text(SOURCE).splitlines()))))
     verified = sorted(asyncio.run(verify(domains)))
     TARGET.write_text("".join(f"{domain}\n" for domain in verified), encoding="utf-8")
     print(f"Проверенные домены сохранены в {TARGET}.\nНайдено {len(verified)} уникальных активных доменов.")
+
+
+def main() -> None:
+    run()
+    wait_for_exit()
 
 
 if __name__ == "__main__":

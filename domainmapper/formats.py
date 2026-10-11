@@ -26,8 +26,8 @@ class RouteFormat:
     extension: str | None = None
     chunk_size: int | None = None
 
-    def example(self, placeholders: Mapping[str, str], values: Mapping[str, str]) -> str:
-        line = self.template.format_map(ChainMap(placeholders, {parameter.name: cyan(parameter.placeholder) for parameter in self.parameters}, values)).strip()
+    def example(self, values: Mapping[str, str]) -> str:
+        line = self.template.format_map(ChainMap(PLACEHOLDERS, {parameter.name: cyan(parameter.placeholder) for parameter in self.parameters}, values)).strip()
         return line if "\n" in self.separator else f"{line}{self.separator}{line}{self.separator}..."
 
     def complete(self, values: Mapping[str, str]) -> dict[str, str]:
@@ -78,6 +78,7 @@ LIST_NAME = Parameter(
 )
 
 PLAIN = "ip"
+PLACEHOLDERS = {"ip": cyan("IP"), "mask": cyan("MASK"), "cidr": cyan("IP/PREFIX")}
 
 FORMATS: dict[str, RouteFormat] = {
     "win": RouteFormat("Windows route", "route add {ip} mask {mask} {gateway}", (GATEWAY,)),
@@ -115,9 +116,9 @@ def route_values(services: Sequence[str], gateway: str = "", keenetic: str = "",
     }
 
 
-def choose_format(key: str, placeholders: Mapping[str, str], values: Mapping[str, str]) -> RouteFormat:
+def choose_format(key: str, values: Mapping[str, str]) -> RouteFormat:
     if not key:
-        labels = [f"{green(item)} - {FORMATS[item].example(placeholders, values)}" for item in MENU]
+        labels = [f"{green(item)} - {FORMATS[item].example(values)}" for item in MENU]
         index = choose_one("В каком формате сохранить файл?", labels, cyan("IP"))
         key = PLAIN if index is None else MENU[index]
     return FORMATS[key]

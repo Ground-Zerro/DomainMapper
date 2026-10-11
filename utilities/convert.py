@@ -4,7 +4,7 @@ from ipaddress import IPv4Address
 from pathlib import Path
 
 from domainmapper.catalog import http_client
-from domainmapper.console import green, red, yellow
+from domainmapper.console import green, red, wait_for_exit, yellow
 from domainmapper.export import export
 from domainmapper.files import read_text
 from domainmapper.filters import RangeFilter, ask_exclude_cloudflare, cloudflare_filter
@@ -25,7 +25,7 @@ async def load_cloudflare() -> RangeFilter:
         return await cloudflare_filter(client)
 
 
-def main() -> None:
+def run() -> None:
     if not SOURCE.is_file():
         print(f"\n{red(f'Ошибка: файл {SOURCE} не найден!')}")
         print(yellow("Инструкция:"))
@@ -37,7 +37,12 @@ def main() -> None:
     if ask_exclude_cloudflare(None):
         cloudflare = asyncio.run(load_cloudflare())
         addresses = {address for address in addresses if address not in cloudflare}
-    export(addresses, SOURCE, "", "", route_values([SERVICE_NAME]))
+    export(addresses, SOURCE, None, "", route_values([SERVICE_NAME]))
+
+
+def main() -> None:
+    run()
+    wait_for_exit()
 
 
 if __name__ == "__main__":

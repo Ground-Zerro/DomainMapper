@@ -1,3 +1,4 @@
+import os
 import sys
 from collections.abc import Sequence
 from functools import partial
@@ -22,6 +23,11 @@ bright = partial(_paint, Style.BRIGHT)
 
 def ask(prompt: str) -> str:
     return input(prompt).strip()
+
+
+def wait_for_exit() -> None:
+    if os.name == "nt":
+        ask(f"\nНажмите {green('Enter')} для выхода...")
 
 
 def ask_until_filled(value: str, prompt: str) -> str:

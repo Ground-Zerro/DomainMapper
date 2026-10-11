@@ -1,13 +1,12 @@
 import argparse
 import asyncio
-import os
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
 from domainmapper.catalog import Catalog, http_client
 from domainmapper.config import AppConfig
-from domainmapper.console import ask, bright, choose_many, green, red, yellow
+from domainmapper.console import bright, choose_many, green, red, wait_for_exit, yellow
 from domainmapper.export import export
 from domainmapper.filters import ask_exclude_cloudflare, cloudflare_filter, stub_filter
 from domainmapper.formats import route_values
@@ -101,8 +100,8 @@ def main() -> None:
         return
     except Exception as error:
         print(f"\n{red('Критическая ошибка:')} {error}")
-    if os.name == "nt" and not config.run:
-        ask(f"\nНажмите {green('Enter')} для выхода...")
+    if not config.run:
+        wait_for_exit()
 
 
 if __name__ == "__main__":

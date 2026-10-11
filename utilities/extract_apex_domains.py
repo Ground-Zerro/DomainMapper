@@ -1,9 +1,9 @@
-import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DIR = PROJECT_ROOT / "platforms"
-TARGET_DIR = PROJECT_ROOT / "platforms_apex"
+from domainmapper.console import wait_for_exit
+
+SOURCE_DIR = Path("platforms")
+TARGET_DIR = Path("platforms_apex")
 TWO_LEVEL_TLDS = frozenset({
     "co.uk", "co.jp", "co.kr", "co.nz", "co.za", "co.il", "co.in",
     "com.au", "com.br", "com.cn", "com.mx", "com.ar", "com.tr",
@@ -25,8 +25,7 @@ def process_file(source: Path, target: Path) -> int:
     return len(apex_domains)
 
 
-def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")
+def run() -> None:
     sources = sorted(SOURCE_DIR.glob("*.txt"))
     if not sources:
         print(f"В папке {SOURCE_DIR} не найдено txt-файлов")
@@ -43,6 +42,11 @@ def main() -> None:
         print(f"✓ {source.name}: {count} уникальных apex-доменов")
     print(f"\nГотово! Обработано {len(sources)} файлов")
     print(f"Результаты сохранены в папке: {TARGET_DIR}")
+
+
+def main() -> None:
+    run()
+    wait_for_exit()
 
 
 if __name__ == "__main__":

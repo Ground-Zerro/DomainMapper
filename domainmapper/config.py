@@ -1,12 +1,15 @@
 import configparser
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeVar
 
-from .aggregation import AGGREGATIONS, NO_AGGREGATION
+from .aggregation import Aggregation, parse_aggregation
 from .console import bright, red, yellow
 from .files import read_text
 from .formats import FORMATS, LIST_NAME, PARAMETERS
+
+T = TypeVar("T")
 
 SECTION = "DomainMapper"
 DEFAULT_RATE_LIMIT = 100
@@ -15,7 +18,6 @@ DEFAULT_FILENAME = "domain-ip-resolve.txt"
 ASK = "спросить у пользователя"
 YES = frozenset({"yes", "y", "on"})
 NO = frozenset({"no", "n", "off"})
-AGGREGATION_ALIASES = {**{key: key for key in AGGREGATIONS}, "no": NO_AGGREGATION, "n": NO_AGGREGATION}
 FORMAT_ALIASES = {key: key for key in FORMATS}
 
 
@@ -39,11 +41,15 @@ class _Section:
     def text(self, key: str) -> str:
         return self._section.get(key, "").strip()
 
-    def known(self, key: str, aliases: Mapping[str, str]) -> str:
-        value = self.text(key).lower()
-        if value and value not in aliases:
+    def parsed(self, key: str, parse: Callable[[str], T | None]) -> T | None:
+        value = self.text(key)
+        result = parse(value) if value else None
+        if value and result is None:
             print(red(f"Неизвестное значение {key} = {value}: будет запрошено у пользователя."))
-        return aliases.get(value, "")
+        return result
+
+    def known(self, key: str, aliases: Mapping[str, str]) -> str:
+        return self.parsed(key, lambda value: aliases.get(value.lower())) or ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,7 +59,7 @@ class AppConfig:
     rate_limit: int = DEFAULT_RATE_LIMIT
     total_rate_limit: int = DEFAULT_TOTAL_RATE_LIMIT
     exclude_cloudflare: bool | None = None
-    aggregation: str = ""
+    aggregation: Aggregation | None = None
     filename: str = DEFAULT_FILENAME
     filetype: str = ""
     gateway: str = ""
@@ -86,7 +92,7 @@ class AppConfig:
             rate_limit=max(1, int(section.text("rate_limit") or DEFAULT_RATE_LIMIT)),
             total_rate_limit=max(1, int(section.text("total_rate_limit") or DEFAULT_TOTAL_RATE_LIMIT)),
             exclude_cloudflare=flag(section.text("cloudflare")),
-            aggregation=section.known("subnet", AGGREGATION_ALIASES),
+            aggregation=section.parsed("subnet", parse_aggregation),
             filename=section.text("filename") or DEFAULT_FILENAME,
             filetype=section.known("filetype", FORMAT_ALIASES),
             gateway=section.text("gateway"),
@@ -106,7 +112,7 @@ class AppConfig:
             ("Лимит запросов к каждому DNS серверу (запросов/сек)", self.rate_limit),
             ("Общий лимит запросов ко всем DNS серверам (запросов/сек)", self.total_rate_limit),
             ("Фильтрация IP-адресов Cloudflare", ASK if self.exclude_cloudflare is None else switch(self.exclude_cloudflare, "а")),
-            ("Агрегация IP-адресов", AGGREGATIONS[self.aggregation].title if self.aggregation else ASK),
+            ("Агрегация IP-адресов", self.aggregation.title if self.aggregation else ASK),
             ("Формат сохранения", FORMATS[self.filetype].title if self.filetype else ASK),
             *((parameter.title, getattr(self, parameter.name) or ASK) for parameter in parameters),
         ]

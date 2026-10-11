@@ -3,12 +3,13 @@
 - [extract_apex_domains - извлечение доменов первого уровня](#extract_apex_domains)
 - [subdomain - поиск субдоменов](#subdomain)
 - [verified - проверка активности доменов](#verified)
+- [update_platforms - обновление списков сервисов](#update_platforms)
 
-Все утилиты требуют Python 3.10 или новее и запускаются из корневой папки репозитория.
+Все утилиты требуют Python 3.10 или новее и запускаются из корневой папки репозитория. Для Windows утилиты `convert`, `extract_apex_domains`, `subdomain` и `verified` есть в виде готовых программ без Python — см. [инструкцию для Windows](win/README.md).
 Зависимости для всех утилит устанавливаются одной командой:
 
 ```bash
-pip install -r utilities/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## convert
@@ -20,9 +21,8 @@ pip install -r utilities/requirements.txt
 - Извлечение IP-адресов из файла `ip.txt`. Файл может содержать любой текст: корректные IPv4-адреса находятся автоматически, некорректные (например, `999.1.1.1`) пропускаются.
 - Исключение IP-адресов Cloudflare (опционально).
 - Агрегация IP-адресов:
-  - `/16` (255.255.0.0)
-  - `/24` (255.255.255.0)
-  - mix: подсеть `/24`, если в ней два адреса или больше, иначе отдельный адрес `/32`
+  - без ограничения: соседние адреса склеиваются в подсеть, только если заполняют её целиком
+  - ограничение числа маршрутов: адреса объединяются в подсети (не шире `/16`) с минимальным захватом лишних адресов
 - Форматы сохранения:
   - только IP-адреса
   - Windows route (`route add`)
@@ -60,7 +60,7 @@ pip install -r utilities/requirements.txt
 
 4. Ответьте на вопросы:
    - исключить ли IP-адреса Cloudflare (`1` — да, `Enter` — нет);
-   - агрегация (`1` — /16, `2` — /24, `3` — mix, `Enter` — без агрегации);
+   - максимальное число маршрутов (`Enter` — без ограничения);
    - формат сохранения (`1`–`9` или `Enter` для простого списка IP);
    - шлюз, интерфейс или имя списка, если выбранный формат их требует.
 
@@ -68,7 +68,7 @@ pip install -r utilities/requirements.txt
 
 #### Windows
 
-См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#convert): `convert.bat` сам установит Python и зависимости.
+Готовая программа `convert.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#convert).
 
 ## extract_apex_domains
 
@@ -87,14 +87,14 @@ pip install -r utilities/requirements.txt
 #### Linux/macOS
 
 ```bash
-python utilities/extract_apex_domains.py
+python -m utilities.extract_apex_domains
 ```
 
 Сторонние библиотеки не нужны. Результаты будут сохранены в папке `platforms_apex`.
 
 #### Windows
 
-Запустите `utilities\win\extract_apex_domains.bat`. Результаты будут сохранены в папке `platforms_apex`.
+Готовая программа `extract_apex_domains.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#extract_apex_domains).
 
 ### Пример
 
@@ -115,32 +115,41 @@ ytimg.com
 
 ## subdomain
 
-Собирает субдомены (A-записи) указанного домена с сайта [rapiddns.io](https://rapiddns.io/subdomain/).
+Собирает субдомены указанного домена сразу из нескольких бесплатных источников, не требующих регистрации:
+
+| Источник | Данные |
+|---|---|
+| [certspotter](https://sslmate.com/ct_search_api/) | журналы Certificate Transparency, основной источник |
+| [crt.sh](https://crt.sh/) | журналы Certificate Transparency |
+| [subdomain.center](https://www.subdomain.center/) | пассивная база субдоменов |
+| [hackertarget](https://hackertarget.com/find-dns-host-records/) | пассивный DNS, до 50 записей |
+| [rapiddns](https://rapiddns.io/) | пассивный DNS, первые 100 записей (больше без входа не отдаётся) |
 
 ### Функции
 
-- Последовательно загружает страницы результатов и извлекает домены из строк таблицы с типом записи `A`.
-- Делает паузу 2–5 секунд между страницами.
-- Повторяет запрос до 5 раз при ответе HTTP 429 (слишком много запросов).
-- Останавливается, если три раза подряд получена пустая страница или если данные на трёх последних страницах одинаковы.
+- Все источники опрашиваются одновременно. Недоступный источник пропускается с предупреждением, остальные продолжают работу.
+- Ошибки сети и ответы 5xx повторяются до 3 раз. При превышении квоты запросов (HTTP 429) утилита ждёт столько, сколько указал сервер, и продолжает.
+- certspotter читается постранично до конца. Без ключа его квота невелика, поэтому для крупных доменов сбор может занять несколько минут. `Ctrl+C` прерывает поиск и сохраняет всё найденное к этому моменту.
+- В результат попадают только имена внутри указанного домена: без `*.`, в нижнем регистре, без повторов, по алфавиту.
+- В конце выводится, сколько имён дал каждый источник.
 
 ### Использование
 
 1. Установите зависимости (см. выше).
 
-2. Запустите скрипт:
+2. Запустите утилиту из корневой папки репозитория, указав домен:
 
    ```bash
-   python utilities/subdomain.py
+   python -m utilities.subdomain example.com
    ```
 
-3. Введите домен, субдомены которого нужно найти, например:
+   Без аргумента домен будет запрошен. Можно вставить и ссылку целиком, например `https://example.com/page`: из неё берётся только домен.
 
-   ```
-   example.com
-   ```
+3. Найденные субдомены будут сохранены в файл `result.txt` в текущей папке. Часть из них может быть неактивна: проверить их можно утилитой [verified](#verified).
 
-4. Найденные субдомены будут сохранены в файл `result.txt` в текущей папке.
+#### Windows
+
+Готовая программа `subdomain.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#subdomain).
 
 ## verified
 
@@ -163,7 +172,33 @@ ytimg.com
 3. Запустите скрипт:
 
    ```bash
-   python utilities/verified.py
+   python -m utilities.verified
    ```
 
 4. Активные домены будут сохранены в файл `verified_domains.txt`.
+
+#### Windows
+
+Готовая программа `verified.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#verified).
+
+## update_platforms
+
+Дополняет списки доменов в папке `platforms` из тегов [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community) (`dlc.dat`) и [runetfreedom/russia-v2ray-rules-dat](https://github.com/runetfreedom/russia-v2ray-rules-dat) (`geosite.dat`). В репозитории запускается автоматически GitHub Actions 1-го и 15-го числа каждого месяца, а также вручную (Actions → Update Platforms → Run workflow).
+
+### Функции
+
+- Соответствие списков и тегов задаёт файл `platformtags` в корне репозитория: путь к списку и один или несколько тегов через запятую. Списки, которых нет в `platformtags`, не изменяются.
+- Правила `domain` и `full` добавляются как есть. Правила `regexp` раскрываются во все возможные субдомены (до 256 вариантов на правило); если шаблон допускает бесконечное число вариантов, берётся самый длинный неизменный хвост шаблона, начиная с границы метки, и только если в нём остаётся субдомен (не менее трёх меток): так в списки не попадают общие домены вроде `amazonaws.com`. Правила `keyword` пропускаются.
+- Исключаются правила с атрибутами `@cn`, `@hk`, `@mo`, `@tw`, `@jp` и домены в зонах `.cn`, `.hk`, `.mo`, `.tw`, `.jp`.
+- Существующие домены сохраняются: список объединяется с новыми доменами, приводится к нижнему регистру, очищается от повторов, комментариев и некорректных строк и сортируется по алфавиту.
+
+### Использование
+
+Требуется Python 3.11 или новее.
+
+```bash
+pip install -r requirements.txt
+python -m utilities.update_platforms
+```
+
+Для каждого списка выводится число добавленных доменов и общий размер.
