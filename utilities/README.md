@@ -68,7 +68,7 @@ pip install -r requirements.txt
 
 #### Windows
 
-Готовая программа `convert.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#convert).
+Готовая программа, Python не нужен. Скачайте [convert.exe](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/convert.exe) и запустите двойным щелчком или скачайте [convert.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/convert.bat): он при каждом запуске загружает актуальную версию `convert.exe` в свою папку и запускает её. Подробнее — в [инструкции для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#convert).
 
 ## extract_apex_domains
 
@@ -94,7 +94,7 @@ python -m utilities.extract_apex_domains
 
 #### Windows
 
-Готовая программа `extract_apex_domains.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#extract_apex_domains).
+Готовая программа, Python не нужен. Скачайте [extract_apex_domains.exe](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/extract_apex_domains.exe) и запустите двойным щелчком или скачайте [extract_apex_domains.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/extract_apex_domains.bat): он при каждом запуске загружает актуальную версию `extract_apex_domains.exe` в свою папку и запускает её. Подробнее — в [инструкции для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#extract_apex_domains).
 
 ### Пример
 
@@ -149,7 +149,7 @@ ytimg.com
 
 #### Windows
 
-Готовая программа `subdomain.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#subdomain).
+Готовая программа, Python не нужен. Скачайте [subdomain.exe](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/subdomain.exe) и запустите двойным щелчком или скачайте [subdomain.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/subdomain.bat): он при каждом запуске загружает актуальную версию `subdomain.exe` в свою папку и запускает её. Подробнее — в [инструкции для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#subdomain).
 
 ## verified
 
@@ -179,7 +179,7 @@ ytimg.com
 
 #### Windows
 
-Готовая программа `verified.exe`, Python не нужен. См. [инструкцию для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#verified).
+Готовая программа, Python не нужен. Скачайте [verified.exe](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/verified.exe) и запустите двойным щелчком или скачайте [verified.bat](https://github.com/Ground-Zerro/DomainMapper/raw/refs/heads/main/utilities/win/verified.bat): он при каждом запуске загружает актуальную версию `verified.exe` в свою папку и запускает её. Подробнее — в [инструкции для Windows](https://github.com/Ground-Zerro/DomainMapper/tree/main/utilities/win#verified).
 
 ## update_platforms
 
