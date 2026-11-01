@@ -29,6 +29,7 @@ jukebox.openai.com
 labs.openai.com
 microscope.openai.com
 o33249.ingest.sentry.io
+o33249.ingest.us.sentry.io
 oaistatic.com
 oaistatsig.com
 oaiusercontent.com

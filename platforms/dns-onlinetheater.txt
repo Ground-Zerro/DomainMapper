@@ -119,6 +119,7 @@ ranger.stream.voidboost.cc
 red.stream.voidboost.cc
 relax.stream.voidboost.cc
 rezka.ag
+rezka.fi
 rezkify.com
 rufilmtv.tv
 sagitta.stream.voidboost.cc
@@ -136,6 +137,7 @@ sound.filmix.biz
 sound.filmix.fm
 sound.filmix.me
 srv.voidnetwork.cloud
+srvkp.com
 st.kinobase.org
 st.kinovod.net
 static.hdrezka.ac
@@ -146,6 +148,7 @@ statichdrezka.ac
 status.themoviedb.org
 stream.voidboost.cc
 stream.voidboost.in
+stream.voidboost.one
 strontium.stream.voidboost.cc
 support-kp.com
 teleos.club
@@ -160,6 +163,7 @@ ununbium.stream.voidboost.cc
 venus.stream.voidboost.cc
 vespene.stream.voidboost.cc
 viking.stream.voidboost.in
+voidslam.org
 web01.stream.voidboost.cc
 web02.stream.voidboost.cc
 www.doramy.club

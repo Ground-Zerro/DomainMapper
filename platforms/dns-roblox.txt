@@ -66,6 +66,7 @@ chi3-rlb-bd1.roblox.com
 client-telemetry.roblox.com
 clientsettings.roblox.com
 d1unuk07s6td74.cloudfront.net
+d348twzf7a8p5.cloudfront.net
 data.roblox.com
 db109.ra.roblox.com
 db123.ra.roblox.com
@@ -77,11 +78,13 @@ db25.chi1.roblox.com
 db4.ra.roblox.com
 db5.ra.roblox.com
 developer.roblox.com
+devforum-uploads.s3.dualstack.us-east-2.amazonaws.com
 dfw1-128-116-125-3.roblox.com
 dfw2-128-116-95-3.roblox.com
 dosarrest.rp-web4.corp.roblox.com
 dosarrest.rp-web6.blog.roblox.com
 dosarrest.rp-web8.corp.roblox.com
+doy2mn9upadnk.cloudfront.net
 economycreatorstats.roblox.com
 edge-term-cdg2.roblox.com
 edge-term-iad2.roblox.com

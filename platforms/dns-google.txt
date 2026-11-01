@@ -53,6 +53,9 @@ app-measurement.com
 appbridge.ca
 appbridge.io
 appbridge.it
+appsgenaiserver-pa.clients.google.com
+appsgenaiserver-pa.clients6.google.com
+appsgenaiserver-pa.googleapis.com
 appspot.com
 apture.com
 area120.com
@@ -213,6 +216,8 @@ firebase.googleapis.com
 firebase.io
 firebaseapp.com
 firebaseappcheck.googleapis.com
+firebaseappdistribution.googleapis.com
+firebaseapptesters.googleapis.com
 firebasedynamiclinks-ipv4.googleapis.com
 firebasedynamiclinks-ipv6.googleapis.com
 firebasedynamiclinks.googleapis.com
@@ -237,6 +242,8 @@ gateway.dev
 gcr.io
 gemini.google
 gemini.google.com
+geminiweb-pa.clients.google.com
+geminiweb-pa.clients6.google.com
 generativelanguage.googleapis.com
 gerritcodereview.com
 get.app
