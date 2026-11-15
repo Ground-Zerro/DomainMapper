@@ -12,5 +12,6 @@ default.exp-tas.com
 github.com
 githubcopilot.com
 origin-tracker.githubusercontent.com
+production-copilot-host-westus.webpubsub.azure.com
 proxy.individual.githubusercontent.com
 telemetry.individual.githubcopilot.com
